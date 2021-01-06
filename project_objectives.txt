@@ -1,0 +1,93 @@
+Phase 1 - Surface level scrape of GH forums
+	Goal: Determine insights about which keycap sets make it from being an interest check to a group buy (including what profiles/manufacturers seem to be doing).
+
+	Approach: Initial data gathering by scraping the "Group Buys and Preorders" and "Interest Checks" GeekHack forums for topics relating to keycap sets.
+
+
+	P1 SCRAPING
+	---
+	Initial level is just to scrape from the forum titles, then maybe try to scrape into the posts in a future round.
+	Will have to scrape from a search query -> so that I can get the date the post was created.
+	This will also yield the post ids needed to access specific posts
+
+	Scrapeable from search page:
+		- board title (ex. "Group Buys and Preorders")
+		- topic link
+		- topic title
+		- poster link
+		- poster name
+		- topic created timestamp 
+
+	Scrapeable from forum list:
+		- board title
+		- topic link
+		- topic title
+		- poster link
+		- poster name
+		- topic views
+		- topic replies
+		- last reply timestamp
+		- (last replier link)
+		- (last replier name)
+
+	The phase 1 scraping part of the project will grab this data and store in CSVs for later analysis
+
+	
+	P1 DATA PROCESSING
+	---
+	Desired derived data:
+		- board title
+		- topic UID (contained in topic link)
+		- group buy or interest check (from title tag)
+		- keyset type code(s) (from title prefix)
+			- keyset material
+			- keyset profile
+			- keyset manufacturer (in some cases)
+		- keyset name (after the type in the title)
+		- round? (potentially from title)
+		- date posted (from topic created timestamp)
+		- creator UID (from poster link)
+		- topic views
+		- topic replies
+		- date last active (from last reply timestamp)
+
+	Keyset type will be a prefix for the name: and as there are only a fixed number of manufacturers/codes this is a pretty good way to find the title in the string as well.
+		- I did notice that a few (comfy PBT) have the type code after the name
+		- also some actually spell out the manufacturer (saw this with infinikey)
+		- or have two type codes (infinikey PBT islander)
+			- to deal with this just have a hierarchy with the more specific one getting the nod
+			- manually set up a matrix for the profile, manufacturer etc. to fill this data based on the type code
+
+	Known type codes:
+		- GMK
+		- PBT
+		- ePBT
+		- SA
+		- KAT (Keyreative)
+		- KAM (also Keyreative)
+		- DSA
+		- IFK (Infinikey)
+		- JTK
+		- CRP (Hammerworks?)
+		- SP (Signature Plastics)
+		- Cherry?
+		- MDA?
+		- XDA?
+		- MG? (Melgeek?)
+
+	How to identify the set title: First search for and identify "[GB]", "[IC]" and similar (needed due to legacy posts in GB forum) -> find any type codes -> try to find a non-whitespace separator after the first type code -> if exists grab max two words up to that non-whitespace, otherwise just one after the type code (ignoring other type codes) -> or if there's nothing left grab any word before the type code
+
+
+	P1 DATA ANALYSIS
+	---
+	Basic insights:
+		-Most popular profile/manufacturer
+		-Attrition rate from ICs to GBs
+			-Split per profile/manu/type code
+		-Average time from initial IC to eventual GB (+ outliers)
+		-Average # of GBs per user who made a GB
+			-Attrition rate for first time ICers (are most GBs coming from popular accounts)
+		-Any GBs posted from different accounts as matching ICs?
+		-Correlation of IC views/posts to existance of corresponding GB
+			-cutoff point?
+		-GB/IC rate over time
