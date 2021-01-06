@@ -28,7 +28,7 @@ import csv
 from bs4 import BeautifulSoup
 
 
-def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10, topic_per_page=50, filepath=None):
+def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10, filepath=None):
     """
     Function to scrape topic data from a specified forum board (formatted like GeekHack). Will return the scraped data
     and save to a file the filepath parameter is set.
@@ -38,15 +38,15 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
     :param limit_pages: int max pages to get
     :param limit_date: (not implemented)
     :param request_interval: int how long on average to wait between requests (randomized)
-    :param topic_per_page: how many topics appear on a page (for indexing into subsequent pages)
     :param filepath:
     :return:
     """
     scraped_board = []
+    topic_per = None
     current_url = board_url + str(0)
     for x in range(limit_pages):
-        if x != 0:
-            current_url = board_url + str(x * topic_per_page)
+        if topic_per:
+            current_url = board_url + str(x * topic_per)
 
         # use a test local file to check that the format parsing works
         print("fake scrape: " + current_url)
@@ -59,6 +59,16 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
 
         current_data = scrape_page(soup, current_url)
         scraped_board.extend(current_data)
+
+        topic_count = len(soup.find('div', class_="tborder topic_table").tbody
+                          .find_all('tr', class_=None))
+        if topic_per:
+            if topic_count < topic_per:
+                # break if latest page has fewer topics than the others
+                print("End of board reached")
+                break
+        else:
+            topic_per = topic_count
 
         if x != (limit_pages - 1):
             time.sleep(request_interval)
