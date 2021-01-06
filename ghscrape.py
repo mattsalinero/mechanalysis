@@ -97,19 +97,19 @@ def scrape_page(page_soup, page_url='unknown'):
     """
     scraped_page = []
     topics = page_soup.find('div', class_="tborder topic_table").table.tbody
-    for topic in topics.find_all('td', class_="subject windowbg2"):
+    for topic in topics.find_all('td', class_=["subject windowbg2", "subject lockedbg2"]):
         scrape = {}
         scrape['title'] = topic.span.a.string
         scrape['topiclink'] = topic.span.a['href']
         scrape['creator'] = topic.p.a.string
         scrape['creatorlink'] = topic.p.a['href']
 
-        stats_block = topic.parent.find('td', class_="stats windowbg").stripped_strings
+        stats_block = topic.parent.find('td', class_=["stats windowbg", "stats lockedbg"]).stripped_strings
         scrape['replies'] = next(stats_block)
         scrape['views'] = next(stats_block)
         # print(scrape['replies'] + ' ' + scrape['views'])
 
-        lastpost = topic.parent.find('td', class_="lastpost windowbg2").stripped_strings
+        lastpost = topic.parent.find('td', class_=["lastpost windowbg2", "lastpost lockedbg2"]).stripped_strings
         scrape['lastpost'] = next(lastpost)
         # print(scrape['lastpost'])
 
