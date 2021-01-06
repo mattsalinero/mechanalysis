@@ -28,13 +28,28 @@ import csv
 from bs4 import BeautifulSoup
 
 
-def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10):
+def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10, topic_per_page=50, filepath=None):
+    """
+    Function to scrape topic data from a specified forum board (formatted like GeekHack). Will return the scraped data
+    and save to a file the filepath parameter is set.
+
+    :param board_url: string of url in the format "https://geekhack.org/index.php?board=70."
+                    - function will append integers to get subsequent pages
+    :param limit_pages: int max pages to get
+    :param limit_date: (not implemented)
+    :param request_interval: int how long on average to wait between requests (randomized)
+    :param topic_per_page: how many topics appear on a page (for indexing into subsequent pages)
+    :param filepath:
+    :return:
+    """
     scraped_board = []
+    current_url = board_url + str(0)
     for x in range(limit_pages):
-        current_url = board_url + str(x * 50)
+        if x != 0:
+            current_url = board_url + str(x * topic_per_page)
 
         # use a test local file to check that the format parsing works
-        print("fake scrape" + current_url)
+        print("fake scrape: " + current_url)
         with open("gbnp.html") as test_board:
             soup = BeautifulSoup(test_board, 'html5lib')
 
@@ -48,6 +63,15 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
         if x != (limit_pages - 1):
             time.sleep(request_interval)
 
+    if filepath:
+        with open(filepath, 'w', encoding="utf-8", newline='') as csvfile:
+            fields = ['title', 'topiclink', 'creator', 'creatorlink', 'replies', 'views', 'lastpost', 'url']
+            csvwriter = csv.DictWriter(csvfile, fieldnames=fields)
+
+            csvwriter.writeheader()
+            csvwriter.writerows(scraped_board)
+
+    print(f"Scraping complete: {len(scraped_board)} topics found")
     return scraped_board
 
 
@@ -97,14 +121,7 @@ def scrape_page(page_soup, page_url='unknown'):
 with open("gbnp.html") as test_board:
     soup = BeautifulSoup(test_board, 'html5lib')
 
-scraped_data = scrape_board("https://geekhack.org/index.php?board=70.", limit_pages=3, request_interval=1)
+scraped_data = scrape_board("https://geekhack.org/index.php?board=70.", limit_pages=3,
+                            request_interval=1, filepath='test.csv')
 
-with open ('test.csv', 'w', encoding="utf-8", newline='') as csvfile:
-    fields = ['title', 'topiclink', 'creator', 'creatorlink', 'replies', 'views', 'lastpost', 'url']
-    csvwriter = csv.DictWriter(csvfile, fieldnames=fields)
-
-    csvwriter.writeheader()
-    csvwriter.writerows(scraped_data)
-
-print(f"Scraping complete: {len(scraped_data)} topics found")
 # print(soup.tbody.prettify())
