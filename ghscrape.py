@@ -1,30 +1,7 @@
-# Initial level is just to scrape from the forum titles, then maybe try to scrape into the posts in a future round.
-# Will have to scrape from a search query -> so that I can get the date the post was created.
-# This will also yield the post ids needed to access specific posts
-#
-# Scrapeable from search page:
-#     - board title (ex. "Group Buys and Preorders")
-#     - topic link
-#     - topic title
-#     - creator link
-#     - creator name
-#     - topic created timestamp
-#
-# Scrapeable from forum list:
-#     - board title
-#     - topic link
-#     - topic title
-#     - creator link
-#     - creator name
-#     - topic views
-#     - topic replies
-#     - last reply timestamp
-#     - (last replier link)
-#     - (last replier name)
-
 import requests
 import time
 import csv
+import random
 from bs4 import BeautifulSoup
 
 
@@ -35,11 +12,11 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
 
     :param board_url: string of url in the format "https://geekhack.org/index.php?board=70."
                     - function will append integers to get subsequent pages
-    :param limit_pages: int max pages to get
+    :param limit_pages: int max pages of board to scrape
     :param limit_date: (not implemented)
     :param request_interval: int how long on average to wait between requests (randomized)
-    :param filepath:
-    :return:
+    :param filepath: if set, will write to specified .csv
+    :return: list of dicts containing scraped data
     """
     scraped_board = []
     topic_per = None
@@ -53,6 +30,7 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
         with open("gbnp.html") as test_board:
             soup = BeautifulSoup(test_board, 'html5lib')
 
+        # access current url for page to scrape
         # print("requesting: " + current_url)
         # current_page = requests.get(current_url)
         # soup = BeautifulSoup(current_page.content, 'html5lib')
@@ -60,6 +38,7 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
         current_data = scrape_page(soup, current_url)
         scraped_board.extend(current_data)
 
+        # checks for ending loop early
         topic_count = len(soup.find('div', class_="tborder topic_table").tbody
                           .find_all('tr', class_=None))
         if topic_per:
@@ -70,9 +49,11 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
         else:
             topic_per = topic_count
 
+        # wait to keep request rate low
         if x != (limit_pages - 1):
-            time.sleep(request_interval)
+            time.sleep(random.randint(request_interval//2, request_interval*2))
 
+    # save to file if appropriate
     if filepath:
         with open(filepath, 'w', encoding="utf-8", newline='') as csvfile:
             fields = ['title', 'topiclink', 'creator', 'creatorlink', 'replies', 'views', 'lastpost', 'url']
@@ -85,12 +66,9 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
     return scraped_board
 
 
-# Build this section out into a function that also takes a URL and inserts that into the scraped data
-# This function would work to extract data out of a single soup
-# (then would loop over this to extract from multiple pages)
 def scrape_page(page_soup, page_url='unknown'):
     """
-
+    Internal function to scrape topic data out of a single page
     :param page_soup:
     :param page_url:
     :return:
@@ -118,18 +96,7 @@ def scrape_page(page_soup, page_url='unknown'):
         scraped_page.append(scrape)
 
     return scraped_page
-# remember to extend() for each page (not append())
 
-
-# this section actually grabs the live data from gh -> test with offline html
-# gbnp_url = "https://geekhack.org/index.php?board=70."
-# board = requests.get(gbnp_url)
-# print(board.url)
-# soup = BeautifulSoup(board.content, 'html5lib')
-
-# use a test local file to check that the format parsing works
-with open("gbnp.html") as test_board:
-    soup = BeautifulSoup(test_board, 'html5lib')
 
 scraped_data = scrape_board("https://geekhack.org/index.php?board=70.", limit_pages=3,
                             request_interval=1, filepath='test.csv')
