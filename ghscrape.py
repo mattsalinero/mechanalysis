@@ -12,7 +12,7 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
     and save to a file the filepath parameter is set.
 
     :param board_url: string of url in the format "https://geekhack.org/index.php?board=70."
-                    - function will append integers to get subsequent pages
+                    - function will append integers to the end to get subsequent pages
     :param limit_pages: int max pages of board to scrape
     :param limit_date: date object of date to scrape to (may overrun by 1 page)
     :param request_interval: int how long on average to wait between requests (randomized)
@@ -111,7 +111,8 @@ def scrape_page(page_soup, page_url='unknown'):
     return scraped_page
 
 
-scraped_data = scrape_board("https://geekhack.org/index.php?board=70.", limit_pages=3,
-                            request_interval=1, filepath='test.csv')
+# scraped_data = scrape_board("https://geekhack.org/index.php?board=70.", limit_pages=3,
+#                             request_interval=1, filepath='test.csv')
+# print(type(scraped_data))
 
 # print(soup.tbody.prettify())
