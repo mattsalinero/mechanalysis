@@ -63,6 +63,7 @@ Phase 1 - Surface level scrape of GH forums
 		- PBT
 		- ePBT
 		- SA
+		- HSA
 		- KAT (Keyreative)
 		- KAM (also Keyreative)
 		- DSA
