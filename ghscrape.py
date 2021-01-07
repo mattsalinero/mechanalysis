@@ -1,5 +1,6 @@
 import requests
 import time
+import datetime
 import csv
 import random
 from bs4 import BeautifulSoup
@@ -13,7 +14,7 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
     :param board_url: string of url in the format "https://geekhack.org/index.php?board=70."
                     - function will append integers to get subsequent pages
     :param limit_pages: int max pages of board to scrape
-    :param limit_date: (not implemented)
+    :param limit_date: date object of date to scrape to (may overrun by 1 page)
     :param request_interval: int how long on average to wait between requests (randomized)
     :param filepath: if set, will write to specified .csv
     :return: list of dicts containing scraped data
@@ -48,6 +49,10 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
                 break
         else:
             topic_per = topic_count
+        if limit_date:
+            if current_data[-1]['lastpost'].date() < limit_date:
+                print("Date limit reached")
+                break
 
         # wait to keep request rate low
         if x != (limit_pages - 1):
@@ -56,7 +61,7 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
     # save to file if appropriate
     if filepath:
         with open(filepath, 'w', encoding="utf-8", newline='') as csvfile:
-            fields = ['title', 'topiclink', 'creator', 'creatorlink', 'replies', 'views', 'lastpost', 'url']
+            fields = ['title', 'topiclink', 'creator', 'creatorlink', 'replies', 'views', 'lastpost', 'url', 'accessed']
             csvwriter = csv.DictWriter(csvfile, fieldnames=fields)
 
             csvwriter.writeheader()
@@ -88,10 +93,11 @@ def scrape_page(page_soup, page_url='unknown'):
         # print(scrape['replies'] + ' ' + scrape['views'])
 
         lastpost = topic.parent.find('td', class_=["lastpost windowbg2", "lastpost lockedbg2"]).stripped_strings
-        scrape['lastpost'] = next(lastpost)
+        scrape['lastpost'] = datetime.datetime.strptime(next(lastpost), "%a, %d %B %Y, %H:%M:%S") # ex: "Mon, 04 January 2021, 22:48:20"
         # print(scrape['lastpost'])
 
         scrape['url'] = page_url
+        scrape['accessed'] = datetime.datetime.now().replace(microsecond=0)
 
         scraped_page.append(scrape)
 
