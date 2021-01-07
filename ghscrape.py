@@ -37,20 +37,27 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
         # soup = BeautifulSoup(current_page.content, 'html5lib')
 
         current_data = scrape_page(soup, current_url)
+
+        if scraped_board:
+            if current_data[-1]['topiclink'] == scraped_board[-1]['topiclink']:
+                # break if duplicate page received
+                print("End of board reached")
+                break
+
         scraped_board.extend(current_data)
 
-        # checks for ending loop early
         topic_count = len(soup.find('div', class_="tborder topic_table").tbody
                           .find_all('tr', class_=None))
         if topic_per:
             if topic_count < topic_per:
-                # break if latest page has fewer topics than the others
+                # break if latest page has fewer topics than the others (i.e. it's the last page)
                 print("End of board reached")
                 break
         else:
             topic_per = topic_count
         if limit_date:
             if current_data[-1]['lastpost'].date() < limit_date:
+                # break if date limit reached
                 print("Date limit reached")
                 break
 
@@ -93,7 +100,7 @@ def scrape_page(page_soup, page_url='unknown'):
         # print(scrape['replies'] + ' ' + scrape['views'])
 
         lastpost = topic.parent.find('td', class_=["lastpost windowbg2", "lastpost lockedbg2"]).stripped_strings
-        scrape['lastpost'] = datetime.datetime.strptime(next(lastpost), "%a, %d %B %Y, %H:%M:%S") # ex: "Mon, 04 January 2021, 22:48:20"
+        scrape['lastpost'] = datetime.datetime.strptime(next(lastpost), "%a, %d %B %Y, %H:%M:%S")
         # print(scrape['lastpost'])
 
         scrape['url'] = page_url
