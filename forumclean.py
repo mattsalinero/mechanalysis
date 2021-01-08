@@ -5,7 +5,12 @@ import pandas as pd
 
 
 def clean_board_data(unclean_data, filepath=None):
-
+    """
+    Cleans scraped data from forum into more readable format
+    :param unclean_data:
+    :param filepath:
+    :return: DataFrame of cleaned data
+    """
     clean_data = pd.DataFrame()
     print(str(type(unclean_data)) + str(type(unclean_data[0])))
     if type(unclean_data) is list and type(unclean_data[0]) is dict:
@@ -36,8 +41,13 @@ def clean_board_data(unclean_data, filepath=None):
 
     return clean_data
 
-def parse_title(to_search):
 
+def parse_title(to_search):
+    """
+    Finds thread type indicator, keyset infocodes, and keyset name from thread title
+    :param to_search: str to parse as a title
+    :return: tuple(str thread type, str infocode, str set name)
+    """
     to_search = to_search.strip('" ')
 
     # find bracketed type indicator
@@ -66,34 +76,38 @@ def parse_title(to_search):
     # for captype in types:
     #     typereturn.append(captype.group())
 
-    # if we found a code, find likely set name in title
+    # if we found a code, find likely keyset name in title
     if typereturn:
+        # tries to find likely separator between set name and status updates
         # sepreg = regex.compile(r"\L<sep_set>", regex.IGNORECASE, sep_set=sep_set)
         sepreg = regex.compile(r"\s[-|~/\\[{(]|[:;,.]\s", regex.IGNORECASE)
-        sep = sepreg.search(to_search, pos=5, endpos=len(to_search))
+        sep = sepreg.search(to_search, pos=5)
+
+        # get string between initial [] identifier and separator(if any), excluding info code
         titlelimit = [0, len(to_search)]
         if gbtype:
             titlelimit[0] = gbtype.end()
         if sep:
             titlelimit[1] = sep.start()
-
         setname = (to_search[titlelimit[0]:captype.start()] + to_search[captype.end():titlelimit[1]]).strip()
 
+        # if no separator, just take first word
         if sep is None:
             setname = setname.split()[0]
 
-        # define separator regex
-        # find separator (if exists)
-        # if it exists, grab stripped string between separator and type as title
-        # else just grab one word past the type
-        # if we can't find anything, set to 'unknown'
         namereturn = setname
     else:
         namereturn = None
 
     return gbreturn, typereturn, namereturn
 
+
 def parse_titles(titles):
+    """
+    Finds thread type indicator, keyset infocodes, and keyset name for list of thread titles
+    :param titles: list[str]
+    :return: tuple(list[str] thread type, list[str] infocode, list[str] set name)
+    """
     threadtypes = []
     capcodes = []
     setnames = []
