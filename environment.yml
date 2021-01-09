@@ -8,3 +8,4 @@ dependencies:
   - ipykernel
   - matplotlib
   - seaborn
+  - html5lib

@@ -6,7 +6,7 @@ import random
 from bs4 import BeautifulSoup
 
 
-def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10, filepath=None):
+def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10, filepath=None, sort='firstpost'):
     """
     Function to scrape topic data from a specified forum board (formatted like GeekHack). Will return the scraped data
     and save to a file the filepath parameter is set.
@@ -17,14 +17,21 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
     :param limit_date: date object of date to scrape to (may overrun by 1 page)
     :param request_interval: int how long on average to wait between requests (randomized)
     :param filepath: if set, will write to specified .csv
+    :param sort: 'firstpost', 'lastpost', 'default' supported sorts for request
     :return: list of dicts containing scraped data
     """
+    # TODO: implement restriction on input values for sort variable
+    sorts = {'firstpost': ";sort=first_post;desc", 'lastpost': ";sort=last_post;desc", 'default': ""}
+    sort_url = sorts[sort]
+
     scraped_board = []
     topic_per = None
-    current_url = board_url + str(0)
+    current_url = board_url + str(0) + sort_url
+    session = requests.Session()
+    session.get(board_url, timeout=5)
     for x in range(limit_pages):
         if topic_per:
-            current_url = board_url + str(x * topic_per)
+            current_url = board_url + str(x * topic_per) + sort_url
 
         # use a test local file to check that the format parsing works
         # print("fake scrape: " + current_url)
@@ -33,7 +40,7 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
 
         # access current url for page to scrape
         print("requesting: " + current_url)
-        current_page = requests.get(current_url)
+        current_page = session.get(current_url, timeout=5)
         soup = BeautifulSoup(current_page.content, 'html5lib')
 
         current_data = scrape_page(soup, current_url)
@@ -80,7 +87,7 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
 
 def scrape_page(page_soup, page_url='unknown'):
     """
-    Internal function to scrape topic data out of a single page
+    Internal function to scrape topic data out of a single page of results
     :param page_soup:
     :param page_url:
     :return:
@@ -91,8 +98,12 @@ def scrape_page(page_soup, page_url='unknown'):
         scrape = {}
         scrape['title'] = topic.span.a.string
         scrape['topiclink'] = topic.span.a['href']
-        scrape['creator'] = topic.p.a.string
-        scrape['creatorlink'] = topic.p.a['href']
+        if topic.p.a:
+            scrape['creator'] = topic.p.a.string
+            scrape['creatorlink'] = topic.p.a['href']
+        else:
+            scrape['creator'] = 'banned user'
+            scrape['creatorlink'] = None
 
         stats_block = topic.parent.find('td', class_=["stats windowbg", "stats lockedbg"]).stripped_strings
         scrape['replies'] = next(stats_block)
@@ -109,10 +120,3 @@ def scrape_page(page_soup, page_url='unknown'):
         scraped_page.append(scrape)
 
     return scraped_page
-
-
-# scraped_data = scrape_board("https://geekhack.org/index.php?board=70.", limit_pages=3,
-#                             request_interval=1, filepath='test.csv')
-# print(type(scraped_data))
-
-# print(soup.tbody.prettify())
