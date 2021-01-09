@@ -1,0 +1,8 @@
+name: mech_env
+dependencies:
+  - numpy
+  - pandas
+  - requests
+  - beautifulsoup4
+  - regex
+  - ipykernel
