@@ -6,3 +6,5 @@ dependencies:
   - beautifulsoup4
   - regex
   - ipykernel
+  - matplotlib
+  - seaborn

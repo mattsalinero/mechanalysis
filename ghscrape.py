@@ -27,14 +27,14 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
             current_url = board_url + str(x * topic_per)
 
         # use a test local file to check that the format parsing works
-        print("fake scrape: " + current_url)
-        with open("gbnp.html") as test_board:
-            soup = BeautifulSoup(test_board, 'html5lib')
+        # print("fake scrape: " + current_url)
+        # with open("gbnp.html") as test_board:
+        #     soup = BeautifulSoup(test_board, 'html5lib')
 
         # access current url for page to scrape
-        # print("requesting: " + current_url)
-        # current_page = requests.get(current_url)
-        # soup = BeautifulSoup(current_page.content, 'html5lib')
+        print("requesting: " + current_url)
+        current_page = requests.get(current_url)
+        soup = BeautifulSoup(current_page.content, 'html5lib')
 
         current_data = scrape_page(soup, current_url)
 

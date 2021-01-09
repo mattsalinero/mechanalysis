@@ -36,8 +36,8 @@ def clean_board_data(unclean_data, filepath=None):
     clean_data['access_date'] = unclean_data['accessed']
     clean_data['title'] = unclean_data['title']
 
-    # print(clean_data.head())
-    # print(clean_data.info())
+    if filepath:
+        clean_data.to_csv(filepath)
 
     return clean_data
 
@@ -48,6 +48,7 @@ def parse_title(to_search):
     :param to_search: str to parse as a title
     :return: tuple(str thread type, str infocode, str set name)
     """
+    # TODO: improve implementation to use actual parser with more sophisticated grammar
     to_search = to_search.strip('" ')
 
     # find bracketed type indicator
@@ -59,12 +60,14 @@ def parse_title(to_search):
     else:
         gbreturn = 'unknown'
 
+    # TODO: add tai-hao (and potential variations like SPSA) to list of infocodes
     type_set = ['GMK', 'PBT', 'ePBT', 'SA', 'HSA', 'KAT', 'KAM', 'DSA', 'IFK', 'JTK', 'CRP', 'SP', 'MDA', 'XDA', 'MG',
                 'INFINIKEY', 'MELGEEK', 'ENJOYPBT']
 
     sep_set = [r"[:;,.]\s", r"\s[-|~/\\[{(]", r"\sround", r"\sr\d"]
 
     # find main/first info code (for keycap)
+    # TODO: add support for multiple infocodes
     typereg = regex.compile(r"\b\L<type_set>\b", regex.IGNORECASE, type_set=type_set)
     captype = typereg.search(to_search)
     if captype:

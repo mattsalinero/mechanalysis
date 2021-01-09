@@ -78,6 +78,20 @@ Phase 1 - Surface level scrape of GH forums
 
 	How to identify the set title: First search for and identify "[GB]", "[IC]" and similar (needed due to legacy posts in GB forum) -> find any type codes -> try to find a non-whitespace separator after the first type code -> if exists grab max two words up to that non-whitespace, otherwise just one after the type code (ignoring other type codes) -> or if there's nothing left grab any word before the type code
 
+    More advanced parser based title analysis
+        - split everything into tokens (might have to be more complicated than just off of whitespace)
+        - detect [GB], [IC] thread type codes  and log
+        - detect 'infocodes' (GMK, IFK, Infinikey) and log
+        - detect 'separators' ('|', ' - ' or being in () or [])
+            -include permutations where less whitespace is used such as '(emoticon)- '
+                -this probably can work with whitespace on one side
+        - detect 'non-title' words ('shipping', 'closed', 'live', keycap(s)/keyset(s))
+            -consume these or treat as separator?
+        - find section with the infocodes, delete everything outside (thread codes/separators as barriers)
+        - what's left, excluding any infocodes should be the title
+            -might also want to strip hanging basic words like "is, a, the" from the end of titles
+
+
 
 	P1 DATA ANALYSIS
 	---
@@ -92,3 +106,6 @@ Phase 1 - Surface level scrape of GH forums
 		-Correlation of IC views/posts to existance of corresponding GB
 			-cutoff point?
 		-GB/IC rate over time
+
+	[GB] Search link:
+	https://geekhack.org/index.php?action=search2;params=eJxLTClLzEtOTalRrzGsUapJKgKxzA2AzOKM_PL45PzcgpzUklSgIEioNCkrNbkkPj8vpxKqoTi_qCQ-JbMIyE1JLU6GigB5mSnxucXpIH5qYlFyBlAk2t0pFgBreCsu;start=0
