@@ -106,6 +106,3 @@ Phase 1 - Surface level scrape of GH forums
 		-Correlation of IC views/posts to existance of corresponding GB
 			-cutoff point?
 		-GB/IC rate over time
-
-	[GB] Search link:
-	https://geekhack.org/index.php?action=search2;params=eJxLTClLzEtOTalRrzGsUapJKgKxzA2AzOKM_PL45PzcgpzUklSgIEioNCkrNbkkPj8vpxKqoTi_qCQ-JbMIyE1JLU6GigB5mSnxucXpIH5qYlFyBlAk2t0pFgBreCsu;start=0
