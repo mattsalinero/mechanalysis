@@ -91,6 +91,12 @@ Phase 1 - Surface level scrape of GH forums
         - what's left, excluding any infocodes should be the title
             -might also want to strip hanging basic words like "is, a, the" from the end of titles
 
+    Potential parser implementations:
+    LARK, Pyleri (CFG Parsers)
+    Arpeggio/textX
+    Parsy, Pyparsing
+
+Initially implement this in LARK -> this is a library that can construct everything within python w/ standard form grammars
 
 
 	P1 DATA ANALYSIS
