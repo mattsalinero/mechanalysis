@@ -56,33 +56,29 @@ def parse_title(to_search):
     title_grammar = r'''
         topic: threadcode? (titlesection | invtitlesection) endsection?      
         threadcode: _LEADBLOCK* _BRACO /\w+/ _BRACC
-        titlesection: infocode+ NAMEBLOCK+
+        titlesection: _LEADBLOCK* infocode+ NAMEBLOCK+
         invtitlesection: INVNAMEBLOCK+ infocode+
         endsection: (_SEPARATOR | notname) (_SEPARATOR | notname | MISCBLOCK)*
         
         infocode: ICODE
-        //icode: "GMK"i -> gmk | "PBT"i -> pbt | ("ePBT"i | "EnjoyPBT"i) -> epbt | ("IFK"i | "Infinikey"i) -> ifk
-        //       | ("MG"i | "Melgeek"i) -> mg | "SA"i -> sa | ("SP"i | "SPSA"i | "Signature Plastics"i) -> sp
-        //       | "HSA"i -> hsa | "KAT"i -> kat | "KAM"i -> kam | "DSA"i -> dsa | "JTK"i -> jtk | "CRP"i -> crp
-        //       | "MDA"i -> mda | "XDA"i -> xda | "DCS"i -> dcs
-        gbstatus: /ship(ping|ed)*/i | /live/i | /clos(ed|ing)*/i | /complet(ed|e|ing)/i | /cancel(ed|led)/i
-               | /finish(ed|ing)*/i | /final(ized|izing)*/i | /sort(ed|ing)*/i
-               | /production/i | /extras*/i 
-               
-        notname: gbstatus | /key(cap|set)*s*/i | /GB|groupbuy|(group buy)/i | /ready/i | /\w+shot/i | /update[ds]*/i
+        notname: GBSTATUS | /key(cap|set)*s*/i | /GB|groupbuy|(group buy)/i | /ready/i | /\w+shot/i | /update[ds]*/i
                 
-        MISCBLOCK.2: /[\w-]+/
-        NAMEBLOCK.3: MISCBLOCK
-        INVNAMEBLOCK.2: MISCBLOCK
+        MISCBLOCK: /\w+([\w.:,-\\\/]+\w)*/
+        //MISCBLOCK: /\w+([\w.:,-\\\/]+\w)*/
+        NAMEBLOCK: MISCBLOCK
+        INVNAMEBLOCK: MISCBLOCK
         _LEADBLOCK: MISCBLOCK
-        ICODE.5: /GMK/i | /PBT/i | /ePBT/i | /EnjoyPBT/ | /IFK/i | /Infinikey/i
+        ICODE: /GMK/i | /PBT/i | /ePBT/i | /EnjoyPBT/ | /IFK/i | /Infinikey/i
                | /MG/i | /Melgeek/i | /SA/ | /SP/i | /SPSA/i | /Signature Plastics/i
                | /HSA/i | /KAT/i | /KAM/i | /DSA/i | /JTK/i | /CRP/i
                | /MDA/i | /XDA/i | /DCS/i
+        GBSTATUS: /ship(ping|ed)*/i | /live/i | /clos(ed|ing)*/i | /complet(ed|e|ing)/i | /cancel(ed|led)/i
+               | /finish(ed|ing)*/i | /final(ized|izing)*/i | /sort(ed|ing)*/i
+               | /production/i | /extras*/i 
                
-        _SEPARATOR.4: /[-:;,.\|~\\\/]+/
-        _BRACO.5: /[\[{(]/
-        _BRACC.5: /[]})]/
+        _SEPARATOR: /[-:;,.\|~\\\/]+/
+        _BRACO: /[\[{(<]/
+        _BRACC: /[]})>]/
         
         
         %import common.WS
@@ -95,9 +91,8 @@ def parse_title(to_search):
     # TODO: handle special characters in title/misc blocks
     #       - or implement such that the special characters only occur within blocks?
     # TODO: handle unparseable case (i.e. not a keycap gb) -> by adding a 3rd option to topic rule
-    # TODO: the LEADBLOCK implementation is now broken for some reason
 
-    title_parser = Lark(title_grammar, start="topic", parser="lalr")
+    title_parser = Lark(title_grammar, start="topic", parser="earley")
     print(title_parser.parse(to_search).pretty())
 
     # TODO: refactor to have parse_title() be independent of clean_board_data()?
