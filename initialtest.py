@@ -17,4 +17,4 @@ from forumclean import *
 
 # testdata = clean_board_data(scraped_data, filepath="data/210108test.csv")
 
-parse_title("[GB] test JTK / 'Vostok-1' // Восток-1 // Tripleshot")
+parse_title("test [GB] invname JTK // Vostok-1 group buy")

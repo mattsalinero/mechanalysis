@@ -54,30 +54,35 @@ def parse_title(to_search):
     # TODO: improve implementation to use actual parser with more sophisticated grammar
 
     title_grammar = r'''
-        topic: (threadcode? titlesection endsection?) | (threadcode? invtitlesection endsection?)
+        topic: threadcode? (titlesection | invtitlesection) endsection?      
         threadcode: _LEADBLOCK* _BRACO /\w+/ _BRACC
-        titlesection: _LEADBLOCK* infocode+ NAMEBLOCK+
-        invtitlesection: NAMEBLOCK+ infocode+
-        endsection.3: (_SEPARATOR | notname) (_SEPARATOR | notname | MISCBLOCK)*
+        titlesection: infocode+ NAMEBLOCK+
+        invtitlesection: INVNAMEBLOCK+ infocode+
+        endsection: (_SEPARATOR | notname) (_SEPARATOR | notname | MISCBLOCK)*
         
-        infocode.3: icode
-        icode.3: "GMK"i -> gmk | "PBT"i -> pbt | ("ePBT"i | "EnjoyPBT"i) -> epbt | ("IFK"i | "Infinikey"i) -> ifk
-               | ("MG"i | "Melgeek"i) -> mg | "SA"i -> sa | ("SP"i | "SPSA"i | "Signature Plastics"i) -> sp
-               | "HSA"i -> hsa | "KAT"i -> kat | "KAM"i -> kam | "DSA"i -> dsa | "JTK"i -> jtk | "CRP"i -> crp
-               | "MDA"i -> mda | "XDA"i -> xda | "DCS"i -> dcs
-        gbstatus.2: /ship(ping|ed)*/i | /live/i | /clos(ed|ing)*/i | /complet(ed|e|ing)/i | /cancel(ed|led)/i
+        infocode: ICODE
+        //icode: "GMK"i -> gmk | "PBT"i -> pbt | ("ePBT"i | "EnjoyPBT"i) -> epbt | ("IFK"i | "Infinikey"i) -> ifk
+        //       | ("MG"i | "Melgeek"i) -> mg | "SA"i -> sa | ("SP"i | "SPSA"i | "Signature Plastics"i) -> sp
+        //       | "HSA"i -> hsa | "KAT"i -> kat | "KAM"i -> kam | "DSA"i -> dsa | "JTK"i -> jtk | "CRP"i -> crp
+        //       | "MDA"i -> mda | "XDA"i -> xda | "DCS"i -> dcs
+        gbstatus: /ship(ping|ed)*/i | /live/i | /clos(ed|ing)*/i | /complet(ed|e|ing)/i | /cancel(ed|led)/i
                | /finish(ed|ing)*/i | /final(ized|izing)*/i | /sort(ed|ing)*/i
                | /production/i | /extras*/i 
                
-        notname.2: gbstatus | /key(cap|set)*s*/i | /GB|groupbuy|(group buy)/i | /ready/i | /\w+shot/i | /update[ds]*/i
+        notname: gbstatus | /key(cap|set)*s*/i | /GB|groupbuy|(group buy)/i | /ready/i | /\w+shot/i | /update[ds]*/i
                 
-        MISCBLOCK: /[\w-]+/
-        NAMEBLOCK: MISCBLOCK
+        MISCBLOCK.2: /[\w-]+/
+        NAMEBLOCK.3: MISCBLOCK
+        INVNAMEBLOCK.2: MISCBLOCK
         _LEADBLOCK: MISCBLOCK
-        
-        _SEPARATOR: /[-:;,.\|~\\\/]+/
-        _BRACO: /[\[{(]/
-        _BRACC: /[]})]/
+        ICODE.5: /GMK/i | /PBT/i | /ePBT/i | /EnjoyPBT/ | /IFK/i | /Infinikey/i
+               | /MG/i | /Melgeek/i | /SA/ | /SP/i | /SPSA/i | /Signature Plastics/i
+               | /HSA/i | /KAT/i | /KAM/i | /DSA/i | /JTK/i | /CRP/i
+               | /MDA/i | /XDA/i | /DCS/i
+               
+        _SEPARATOR.4: /[-:;,.\|~\\\/]+/
+        _BRACO.5: /[\[{(]/
+        _BRACC.5: /[]})]/
         
         
         %import common.WS
@@ -88,7 +93,9 @@ def parse_title(to_search):
     # TODO: rewite grammar including whitespace (to better differentiate potential titles and separators)
     # TODO: define some separators as needing WS on at least one side (-,.:;\/~) vs (|[](){}) which don't
     # TODO: handle special characters in title/misc blocks
+    #       - or implement such that the special characters only occur within blocks?
     # TODO: handle unparseable case (i.e. not a keycap gb) -> by adding a 3rd option to topic rule
+    # TODO: the LEADBLOCK implementation is now broken for some reason
 
     title_parser = Lark(title_grammar, start="topic", parser="lalr")
     print(title_parser.parse(to_search).pretty())
