@@ -1,6 +1,7 @@
 import datetime
 import csv
 import regex
+import emoji
 import pandas as pd
 from lark import Lark
 
@@ -51,49 +52,76 @@ def parse_title(to_search):
     :param to_search: str to parse as a title
     :return: tuple(str thread type, str infocode, str set name)
     """
-    # TODO: improve implementation to use actual parser with more sophisticated grammar
 
     title_grammar = r'''
-        topic: threadcode? (titlesection | invtitlesection) endsection?      
-        threadcode: _LEADBLOCK* _BRACO /\w+/ _BRACC
-        titlesection: _LEADBLOCK* infocode+ NAMEBLOCK+
-        invtitlesection: INVNAMEBLOCK+ infocode+
+        topic: keycapthread | otherthread
+        keycapthread.2: threadcode? (titlesection | invtitlesection) endsection?      
+        otherthread: threadcode? _ANYBLOCK+
+        
+        threadcode: _LEADBLOCK* _BRACO THCODE _BRACC
+        titlesection: _LEADBLOCK* _infocode+ NAMEBLOCK+
+        invtitlesection: INVNAMEBLOCK+ _infocode+
         endsection: (_SEPARATOR | notname) (_SEPARATOR | notname | MISCBLOCK)*
         
-        infocode: ICODE
-        notname: GBSTATUS | /key(cap|set)*s*/i | /GB|groupbuy|(group buy)/i | /ready/i | /\w+shot/i | /update[ds]*/i
+        _infocode.3: ICODE
+        notname.2: GBSTATUS | /key(cap|set)*s*/i | /GB|groupbuy|(group buy)/i | /ready/i | /\w+shot/i | /update[ds]*/i
                 
         MISCBLOCK: /\w+([\w.:,-\\\/]+\w)*/
-        //MISCBLOCK: /\w+([\w.:,-\\\/]+\w)*/
         NAMEBLOCK: MISCBLOCK
         INVNAMEBLOCK: MISCBLOCK
         _LEADBLOCK: MISCBLOCK
+        _ANYBLOCK: /[\w\W]+/
+        
         ICODE: /GMK/i | /PBT/i | /ePBT/i | /EnjoyPBT/ | /IFK/i | /Infinikey/i
                | /MG/i | /Melgeek/i | /SA/ | /SP/i | /SPSA/i | /Signature Plastics/i
                | /HSA/i | /KAT/i | /KAM/i | /DSA/i | /JTK/i | /CRP/i
                | /MDA/i | /XDA/i | /DCS/i
         GBSTATUS: /ship(ping|ed)*/i | /live/i | /clos(ed|ing)*/i | /complet(ed|e|ing)/i | /cancel(ed|led)/i
                | /finish(ed|ing)*/i | /final(ized|izing)*/i | /sort(ed|ing)*/i
-               | /production/i | /extras*/i 
+               | /production/i | /extras*/i
+        THCODE: /\w+/
                
         _SEPARATOR: /[-:;,.\|~\\\/]+/
+        // EMOJI: /:\w+:/
         _BRACO: /[\[{(<]/
         _BRACC: /[]})>]/
-        
         
         %import common.WS
         %ignore WS
         %ignore /[!'"]/
     '''
 
-    # TODO: rewite grammar including whitespace (to better differentiate potential titles and separators)
-    # TODO: define some separators as needing WS on at least one side (-,.:;\/~) vs (|[](){}) which don't
-    # TODO: handle special characters in title/misc blocks
-    #       - or implement such that the special characters only occur within blocks?
-    # TODO: handle unparseable case (i.e. not a keycap gb) -> by adding a 3rd option to topic rule
-
     title_parser = Lark(title_grammar, start="topic", parser="earley")
-    print(title_parser.parse(to_search).pretty())
+
+    title_tree = title_parser.parse(emoji.demojize(to_search)).children[0]
+
+    print(title_tree.pretty())
+    print(title_tree.data)
+    print(title_tree.children[0])
+
+    producttype = "unknown"
+    threadtype = "unknown"
+    infocodes = []
+    setname = ""
+
+    if title_tree.data == 'keycapthread':
+        producttype = "keycaps"
+        print("producttype " + producttype)
+
+    for subtree in title_tree.children:
+        if subtree.data == 'threadcode':
+            threadtype = subtree.children[0].value
+            print("threadtype " + threadtype)
+        elif subtree.data == 'titlesection':
+            for token in subtree.children:
+                if token.type == 'ICODE':
+                    infocodes.append(token.value)
+                else:
+                    setname = " ".join([setname, token.value])
+
+            print("infocodes " + str(infocodes))
+            print("setname " + setname)
+
 
     # TODO: refactor to have parse_title() be independent of clean_board_data()?
 
