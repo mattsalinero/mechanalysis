@@ -17,6 +17,6 @@ from forumclean import *
 
 # testdata = clean_board_data(scraped_data, filepath="data/210108test.csv")
 
-parse_title("[GB] GMK Evil Dolch😈 | Final Numbers!")
+parse_titles(["[GB] GMK Evil Dolch😈 | Final Numbers!", "GMK DSA unknown"])
 
 "[GB] GMK Evil Dolch | Final Numbers! 😈"

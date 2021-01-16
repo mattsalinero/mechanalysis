@@ -15,7 +15,6 @@ def clean_board_data(unclean_data, filepath=None):
     """
     # TODO: potentially move clean_board_data() to the initial scraping step, break parse_title into own thing
     clean_data = pd.DataFrame()
-    # print(str(type(unclean_data)) + str(type(unclean_data[0])))
     if type(unclean_data) is list and type(unclean_data[0]) is dict:
         unclean_data = pd.DataFrame(unclean_data)
 
@@ -23,7 +22,8 @@ def clean_board_data(unclean_data, filepath=None):
     clean_data['topic_id'] = unclean_data['topiclink'].apply(lambda x: x.split('=')[-1].split('.')[0])
 
     # parse information from title
-    clean_data['thread_type'], clean_data['code'], clean_data['name'] = parse_titles(unclean_data['title'])
+    clean_data['product_type'], clean_data['thread_type'], clean_data['info_codes'], clean_data['set_name'] \
+        = parse_titles(unclean_data['title'])
 
     # parse for creator info
     clean_data['creator'] = unclean_data['creator']
@@ -46,58 +46,17 @@ def clean_board_data(unclean_data, filepath=None):
     return clean_data
 
 
-def parse_title(to_search):
+def parse_title(to_search, title_parser):
     """
     Finds thread type indicator, keyset infocodes, and keyset name from thread title
     :param to_search: str to parse as a title
+    :param title_parser:
     :return: tuple(str thread type, str infocode, str set name)
     """
-
-    title_grammar = r'''
-        topic: keycapthread | otherthread
-        keycapthread.2: threadcode? (titlesection | invtitlesection) endsection?      
-        otherthread: threadcode? _ANYBLOCK+
-        
-        threadcode: _LEADBLOCK* _BRACO THCODE _BRACC
-        titlesection: _LEADBLOCK* _infocode+ NAMEBLOCK+
-        invtitlesection: INVNAMEBLOCK+ _infocode+
-        endsection: (_SEPARATOR | notname) (_SEPARATOR | notname | MISCBLOCK)*
-        
-        _infocode.3: ICODE
-        notname.2: GBSTATUS | /key(cap|set)*s*/i | /GB|groupbuy|(group buy)/i | /ready/i | /\w+shot/i | /update[ds]*/i
-                
-        MISCBLOCK: /\w+([\w.:,-\\\/]+\w)*/
-        NAMEBLOCK: MISCBLOCK
-        INVNAMEBLOCK: MISCBLOCK
-        _LEADBLOCK: MISCBLOCK
-        _ANYBLOCK: /[\w\W]+/
-        
-        ICODE: /GMK/i | /PBT/i | /ePBT/i | /EnjoyPBT/ | /IFK/i | /Infinikey/i
-               | /MG/i | /Melgeek/i | /SA/ | /SP/i | /SPSA/i | /Signature Plastics/i
-               | /HSA/i | /KAT/i | /KAM/i | /DSA/i | /JTK/i | /CRP/i
-               | /MDA/i | /XDA/i | /DCS/i
-        GBSTATUS: /ship(ping|ed)*/i | /live/i | /clos(ed|ing)*/i | /complet(ed|e|ing)/i | /cancel(ed|led)/i
-               | /finish(ed|ing)*/i | /final(ized|izing)*/i | /sort(ed|ing)*/i
-               | /production/i | /extras*/i
-        THCODE: /\w+/
-               
-        _SEPARATOR: /[-:;,.\|~\\\/]+/
-        // EMOJI: /:\w+:/
-        _BRACO: /[\[{(<]/
-        _BRACC: /[]})>]/
-        
-        %import common.WS
-        %ignore WS
-        %ignore /[!'"]/
-    '''
-
-    title_parser = Lark(title_grammar, start="topic", parser="earley")
-
+    # TODO: fix docstring for output
     title_tree = title_parser.parse(emoji.demojize(to_search)).children[0]
 
     print(title_tree.pretty())
-    print(title_tree.data)
-    print(title_tree.children[0])
 
     producttype = "unknown"
     threadtype = "unknown"
@@ -122,65 +81,7 @@ def parse_title(to_search):
             print("infocodes " + str(infocodes))
             print("setname " + setname)
 
-
-    # TODO: refactor to have parse_title() be independent of clean_board_data()?
-
-    # to_search = to_search.strip('" ')
-    #
-    # # find bracketed type indicator
-    # gbreg = regex.compile(r"[[{(](\w*)[]})]")
-    # gbtype = gbreg.match(to_search)
-    # if gbtype:
-    #     gbreturn = gbtype.group(1)
-    #
-    # else:
-    #     gbreturn = 'unknown'
-    #
-    # # TODO: add tai-hao (and potential variations like SPSA) to list of infocodes
-    # type_set = ['GMK', 'PBT', 'ePBT', 'SA', 'HSA', 'KAT', 'KAM', 'DSA', 'IFK', 'JTK', 'CRP', 'SP', 'MDA', 'XDA', 'MG',
-    #             'INFINIKEY', 'MELGEEK', 'ENJOYPBT']
-    #
-    # sep_set = [r"[:;,.]\s", r"\s[-|~/\\[{(]", r"\sround", r"\sr\d"]
-    #
-    # # find main/first info code (for keycap)
-    # # TODO: add support for multiple infocodes
-    # typereg = regex.compile(r"\b\L<type_set>\b", regex.IGNORECASE, type_set=type_set)
-    # captype = typereg.search(to_search)
-    # if captype:
-    #     typereturn = captype.group()
-    # else:
-    #     typereturn = None
-    # # types = typereg.finditer(to_search)
-    # # typereturn = []
-    # # for captype in types:
-    # #     typereturn.append(captype.group())
-    #
-    # # if we found a code, find likely keyset name in title
-    # if typereturn:
-    #     # tries to find likely separator between set name and status updates
-    #     # sepreg = regex.compile(r"\L<sep_set>", regex.IGNORECASE, sep_set=sep_set)
-    #     sepreg = regex.compile(r"\s[-|~/\\[{(]|[:;,.]\s", regex.IGNORECASE)
-    #     sep = sepreg.search(to_search, pos=5)
-    #
-    #     # get string between initial [] identifier and separator(if any), excluding info code
-    #     titlelimit = [0, len(to_search)]
-    #     if gbtype:
-    #         titlelimit[0] = gbtype.end()
-    #     if sep:
-    #         titlelimit[1] = sep.start()
-    #     setname = (to_search[titlelimit[0]:captype.start()] + to_search[captype.end():titlelimit[1]]).strip()
-    #
-    #     # if no separator, just take first word
-    #     if sep is None:
-    #         setname = setname.split()[0]
-    #
-    #     namereturn = setname
-    # else:
-    #     namereturn = None
-    #
-    # return gbreturn, typereturn, namereturn
-
-    return
+    return producttype, threadtype, infocodes, setname
 
 
 def parse_titles(titles):
@@ -189,14 +90,58 @@ def parse_titles(titles):
     :param titles: list[str]
     :return: tuple(list[str] thread type, list[str] infocode, list[str] set name)
     """
+    # TODO: fix docstring for output
+    # TODO: add tai-hao (and potential variations like SPSA) to list of infocodes
+    title_grammar = r'''
+        topic: keycapthread | otherthread
+        keycapthread.2: threadcode? (titlesection | invtitlesection) endsection?      
+        otherthread: threadcode? _ANYBLOCK+
+
+        threadcode: _LEADBLOCK* _BRACO THCODE _BRACC
+        titlesection: _LEADBLOCK* _infocode+ NAMEBLOCK+
+        invtitlesection: INVNAMEBLOCK+ _infocode+
+        endsection: (_SEPARATOR | notname) (_SEPARATOR | notname | MISCBLOCK)*
+
+        _infocode.3: ICODE
+        notname.2: GBSTATUS | /key(cap|set)*s*/i | /GB|groupbuy|(group buy)/i | /ready/i | /\w+shot/i | /update[ds]*/i
+
+        MISCBLOCK: /\w+([\w.:,-\\\/]+\w)*/
+        NAMEBLOCK: MISCBLOCK
+        INVNAMEBLOCK: MISCBLOCK
+        _LEADBLOCK: MISCBLOCK
+        _ANYBLOCK: /[\w\W]+/
+
+        ICODE: /GMK/i | /PBT/i | /ePBT/i | /EnjoyPBT/ | /IFK/i | /Infinikey/i
+               | /MG/i | /Melgeek/i | /SA/ | /SP/i | /SPSA/i | /Signature Plastics/i
+               | /HSA/i | /KAT/i | /KAM/i | /DSA/i | /JTK/i | /CRP/i
+               | /MDA/i | /XDA/i | /DCS/i
+        GBSTATUS: /ship(ping|ed)*/i | /live/i | /clos(ed|ing)*/i | /complet(ed|e|ing)/i | /cancel(ed|led)/i
+               | /finish(ed|ing)*/i | /final(ized|izing)*/i | /sort(ed|ing)*/i
+               | /production/i | /extras*/i
+        THCODE: /\w+/
+
+        _SEPARATOR: /[-:;,.\|~\\\/]+/
+        // EMOJI: /:\w+:/
+        _BRACO: /[\[{(<]/
+        _BRACC: /[]})>]/
+
+        %import common.WS
+        %ignore WS
+        %ignore /[!'"]/
+    '''
+
+    parser = Lark(title_grammar, start="topic", parser="earley")
+
+    producttypes = []
     threadtypes = []
-    capcodes = []
+    icodes = []
     setnames = []
 
     for title in titles:
-        parsed = parse_title(title)
-        threadtypes.append(parsed[0])
-        capcodes.append(parsed[1])
-        setnames.append(parsed[2])
+        parsed = parse_title(title, parser)
+        producttypes.append(parsed[0])
+        threadtypes.append(parsed[1])
+        icodes.append(parsed[2])
+        setnames.append(parsed[3])
 
-    return threadtypes, capcodes, setnames
+    return producttypes, threadtypes, icodes, setnames
