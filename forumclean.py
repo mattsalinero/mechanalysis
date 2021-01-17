@@ -6,17 +6,27 @@ import pandas as pd
 from lark import Lark
 
 
-def clean_board_data(unclean_data, filepath=None):
+def clean_board_data(unclean_data=None, infilepath=None, outfilepath=None, returndf=True):
     """
     Cleans scraped data from forum into more readable format
     :param unclean_data:
-    :param filepath:
-    :return: DataFrame of cleaned data
+    :param infilepath:
+    :param outfilepath:
+    :param returndf:
+    :return: pandas DataFrame of cleaned data
     """
-    # TODO: potentially move clean_board_data() to the initial scraping step, break parse_title into own thing
+    # TODO: potentially move clean_board_data() to the initial scraping step, break parse_title(s) into own thing
+    # TODO: add a progress bar or some sort of indicator of how quickly the process is going
+
     clean_data = pd.DataFrame()
-    if type(unclean_data) is list and type(unclean_data[0]) is dict:
-        unclean_data = pd.DataFrame(unclean_data)
+    if unclean_data:
+        if type(unclean_data) is list and type(unclean_data[0]) is dict:
+            unclean_data = pd.DataFrame(unclean_data)
+    elif infilepath:
+        unclean_data = pd.read_csv(infilepath)
+    else:
+        # TODO: error handling for improper input
+        pass
 
     # parse for topic number
     clean_data['topic_id'] = unclean_data['topiclink'].apply(lambda x: x.split('=')[-1].split('.')[0])
@@ -40,10 +50,13 @@ def clean_board_data(unclean_data, filepath=None):
     clean_data['access_date'] = unclean_data['accessed']
     clean_data['title'] = unclean_data['title']
 
-    if filepath:
-        clean_data.to_csv(filepath)
+    if outfilepath:
+        clean_data.to_csv(outfilepath)
 
-    return clean_data
+    if returndf:
+        return clean_data
+    else:
+        return
 
 
 def parse_title(to_search, title_parser):
@@ -56,8 +69,6 @@ def parse_title(to_search, title_parser):
     # TODO: fix docstring for output
     title_tree = title_parser.parse(emoji.demojize(to_search)).children[0]
 
-    print(title_tree.pretty())
-
     producttype = "unknown"
     threadtype = "unknown"
     infocodes = []
@@ -65,12 +76,12 @@ def parse_title(to_search, title_parser):
 
     if title_tree.data == 'keycapthread':
         producttype = "keycaps"
-        print("producttype " + producttype)
+        # print("producttype " + producttype)
 
     for subtree in title_tree.children:
         if subtree.data == 'threadcode':
             threadtype = subtree.children[0].value
-            print("threadtype " + threadtype)
+            # print("threadtype " + threadtype)
         elif subtree.data == 'titlesection':
             for token in subtree.children:
                 if token.type == 'ICODE':
@@ -78,8 +89,8 @@ def parse_title(to_search, title_parser):
                 else:
                     setname = " ".join([setname, token.value])
 
-            print("infocodes " + str(infocodes))
-            print("setname " + setname)
+            # print("infocodes " + str(infocodes))
+            # print("setname " + setname)
 
     return producttype, threadtype, infocodes, setname
 
@@ -97,37 +108,37 @@ def parse_titles(titles):
         keycapthread.2: threadcode? (titlesection | invtitlesection) endsection?      
         otherthread: threadcode? _ANYBLOCK+
 
-        threadcode: _LEADBLOCK* _BRACO THCODE _BRACC
+        threadcode.2: _LEADBLOCK* _BRACO THCODE _BRACC
         titlesection: _LEADBLOCK* _infocode+ NAMEBLOCK+
         invtitlesection: INVNAMEBLOCK+ _infocode+
-        endsection: (_SEPARATOR | notname) (_SEPARATOR | notname | MISCBLOCK)*
+        endsection.2: (_SEPARATOR | notname) (_SEPARATOR | notname | _ANYBLOCK)*
 
-        _infocode.3: ICODE
+        _infocode.3: ICODE 
         notname.2: GBSTATUS | /key(cap|set)*s*/i | /GB|groupbuy|(group buy)/i | /ready/i | /\w+shot/i | /update[ds]*/i
 
-        MISCBLOCK: /\w+([\w.:,-\\\/]+\w)*/
+        MISCBLOCK: /[\w&]+([\w.:*,&-\\\/]+\w)*/
         NAMEBLOCK: MISCBLOCK
         INVNAMEBLOCK: MISCBLOCK
         _LEADBLOCK: MISCBLOCK
         _ANYBLOCK: /[\w\W]+/
 
         ICODE: /GMK/i | /PBT/i | /ePBT/i | /EnjoyPBT/ | /IFK/i | /Infinikey/i
-               | /MG/i | /Melgeek/i | /SA/ | /SP/i | /SPSA/i | /Signature Plastics/i
-               | /HSA/i | /KAT/i | /KAM/i | /DSA/i | /JTK/i | /CRP/i
+               | /MG(?=\W)/i | /Melgeek/i | /SA(?=\W)/i | /SP(?=\W)/i | /SPSA(?=\W)/i | /Signature Plastics/i
+               | /HSA/i | /KAT(?=\W)/i | /KAM(?=\W)/i | /DSA/i | /JTK/i | /CRP/i
                | /MDA/i | /XDA/i | /DCS/i
         GBSTATUS: /ship(ping|ed)*/i | /live/i | /clos(ed|ing)*/i | /complet(ed|e|ing)/i | /cancel(ed|led)/i
                | /finish(ed|ing)*/i | /final(ized|izing)*/i | /sort(ed|ing)*/i
-               | /production/i | /extras*/i
+               | /production/i | /extras*/i | /hold/i
         THCODE: /\w+/
 
-        _SEPARATOR: /[-:;,.\|~\\\/]+/
+        _SEPARATOR: /[-:;,+*.\|~\\\/]+/ | _BRACO | _BRACC
         // EMOJI: /:\w+:/
-        _BRACO: /[\[{(<]/
-        _BRACC: /[]})>]/
+        _BRACO: /[\[{(<「]/
+        _BRACC: /[]})>」]/
 
         %import common.WS
         %ignore WS
-        %ignore /[!'"]/
+        %ignore /[!'"█]/
     '''
 
     parser = Lark(title_grammar, start="topic", parser="earley")

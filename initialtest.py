@@ -17,6 +17,10 @@ from forumclean import *
 
 # testdata = clean_board_data(scraped_data, filepath="data/210108test.csv")
 
-parse_titles(["[GB] GMK Evil Dolch😈 | Final Numbers!", "GMK DSA unknown"])
+# parse_titles(["[GB] GMK Red & Blue Samurai (GB Closed)"])
+# parse_titles(["[GB] GMK Lunar 🚀 — All Kits Will Be Made; Final Numbers Posted"])
+# parse_titles(["[GB]Enjoypbt '紺桃KON MOMO' Japanese keycaps (7.10~7.30)"])
 
-"[GB] GMK Evil Dolch | Final Numbers! 😈"
+
+clean_board_data(infilepath="data/210109gb_raw.csv", outfilepath="data/210109gb_clean2.csv")
+
