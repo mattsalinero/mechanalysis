@@ -16,7 +16,6 @@ def clean_board_data(unclean_data=None, infilepath=None, outfilepath=None, retur
     :return: pandas DataFrame of cleaned data
     """
     # TODO: potentially move clean_board_data() to the initial scraping step, break parse_title(s) into own thing
-    # TODO: add a progress bar or some sort of indicator of how quickly the process is going
 
     clean_data = pd.DataFrame()
     if unclean_data:
@@ -27,6 +26,8 @@ def clean_board_data(unclean_data=None, infilepath=None, outfilepath=None, retur
     else:
         # TODO: error handling for improper input
         pass
+
+    print(f"Parsing {len(unclean_data.index)} records")
 
     # parse for topic number
     clean_data['topic_id'] = unclean_data['topiclink'].apply(lambda x: x.split('=')[-1].split('.')[0])
@@ -50,8 +51,10 @@ def clean_board_data(unclean_data=None, infilepath=None, outfilepath=None, retur
     clean_data['access_date'] = unclean_data['accessed']
     clean_data['title'] = unclean_data['title']
 
+    print(f"Parsed {len(clean_data.index)} records")
     if outfilepath:
         clean_data.to_csv(outfilepath)
+        print(f"Saved to {outfilepath}")
 
     if returndf:
         return clean_data
