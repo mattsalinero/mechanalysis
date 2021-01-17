@@ -125,7 +125,7 @@ def parse_titles(titles):
         _LEADBLOCK: MISCBLOCK
         _ANYBLOCK: /[\w\W]+/
 
-        ICODE: /GMK/i | /PBT/i | /ePBT/i | /EnjoyPBT/ | /IFK/i | /Infinikey/i
+        ICODE: /GMK/i | /PBT/i | /ePBT/i | /EnjoyPBT/i | /IFK/i | /Infinikey/i
                | /MG(?=\W)/i | /Melgeek/i | /SA(?=\W)/i | /SP(?=\W)/i | /SPSA(?=\W)/i | /Signature Plastics/i
                | /HSA/i | /KAT(?=\W)/i | /KAM(?=\W)/i | /DSA/i | /JTK/i | /CRP/i
                | /MDA/i | /XDA/i | /DCS/i
