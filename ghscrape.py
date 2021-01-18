@@ -120,3 +120,56 @@ def scrape_page(page_soup, page_url='unknown'):
         scraped_page.append(scrape)
 
     return scraped_page
+
+
+def scrape_topics(forum_url, topic_ids, limit_topics=None, limit_date=None, request_interval=10, filepath=None):
+
+    if limit_topics and len(topic_ids) > limit_topics:
+        topic_ids = topic_ids[:limit_topics]
+    else:
+        topic_ids = topic_ids[:]
+
+    session = requests.Session()
+    base_url = forum_url + "/index.php?topic="
+    topic_data = []
+    for topic_id in topic_ids:
+
+        current_url = base_url + topic_id + ".0"
+
+        # use a test local file to check that the format parsing works
+        # print("fake scrape: " + current_url)
+        # with open("testtopic.html") as test_topic:
+        #     soup = BeautifulSoup(test_topic, 'html5lib')
+
+        # access current url for page to scrape
+        print("requesting: topic " + topic_id)
+        current_page = session.get(current_url, timeout=5)
+        soup = BeautifulSoup(current_page.content, 'html5lib')
+
+        # TODO: define scrape_topic() function
+        current_data = scrape_topic(soup, current_url)
+
+        topic_data.append(current_data)
+
+        # TODO: implement date limit in scrape_topics()
+        # if limit_date:
+        #     if current_data[-1]['lastpost'].date() < limit_date:
+        #         # break if date limit reached
+        #         print("Date limit reached")
+        #         break
+
+        # wait to keep request rate low
+        if topic_id != topic_ids[-1]:
+            time.sleep(random.randint(request_interval//2, request_interval*2))
+
+    if filepath:
+        with open(filepath, 'w', encoding="utf-8", newline='') as csvfile:
+            # TODO: fix fields structure with correct field names
+            fields = ['title', 'topiclink', 'creator', 'creatorlink', 'replies', 'views', 'lastpost', 'url', 'accessed']
+            csvwriter = csv.DictWriter(csvfile, fieldnames=fields)
+
+            csvwriter.writeheader()
+            csvwriter.writerows(topic_data)
+
+    print(f"Scraping complete: {len(topic_data)} topics scraped")
+    return topic_data
