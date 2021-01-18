@@ -176,20 +176,20 @@ def scrape_topics(forum_url, topic_ids, limit_topics=None, limit_date=None, requ
     return topic_data
 
 
-def scrape_topic(topic_soup, id='unknown'):
+def scrape_topic(topic_soup, topic_id='unknown'):
     """
     Internal function to extract information from a single topic page
     :param topic_soup:
-    :param id: topic id to associate with extracted data
+    :param topic_id: topic id to associate with extracted data
     :return: dict of extracted topic data
     """
-    scraped_topic = {'topic_id': id}
+    scraped_topic = {'topic_id': topic_id}
 
-    # Get the posts in the topic
+    # get the posts in the topic
     posts = topic_soup.find('div', id="forumposts").find(id="quickModForm").findAll('div', class_="post_wrapper")
     first_post = posts[0]
 
-    # Find data specific to first post (topic created date, full lists of links, images)
+    # find data specific to first post (topic created date, full lists of links, images)
     date_created = first_post.find('div', class_="keyinfo").find('div', class_="smalltext").stripped_strings
     scraped_topic['topic_created'] = datetime.datetime.strptime((' '.join([text for text in date_created])),
                                                                 "« on: %a, %d %B %Y, %H:%M:%S »")
@@ -203,32 +203,28 @@ def scrape_topic(topic_soup, id='unknown'):
     print(f"  topic contains: {len(scraped_topic['fp_images'])} images")
     # [print(link) for link in scraped_topic['fp_images']]
 
-    # TODO: loop over post content, extract number of unique posters, post text (for later sentiment analysis?)
-    #  and unique posts by topic starter
+    # find data for each post on first page (including poster, time, text)
+    scraped_posts = []
+    for post in posts:
+        scraped_post = {}
 
-    # for topic in topics.find_all('td', class_=["subject windowbg2", "subject lockedbg2"]):
-    #     scrape = {}
-    #     scrape['title'] = topic.span.a.string
-    #     scrape['topiclink'] = topic.span.a['href']
-    #     if topic.p.a:
-    #         scrape['creator'] = topic.p.a.string
-    #         scrape['creatorlink'] = topic.p.a['href']
-    #     else:
-    #         scrape['creator'] = 'banned user'
-    #         scrape['creatorlink'] = None
-    #
-    #     stats_block = topic.parent.find('td', class_=["stats windowbg", "stats lockedbg"]).stripped_strings
-    #     scrape['replies'] = next(stats_block)
-    #     scrape['views'] = next(stats_block)
-    #     # print(scrape['replies'] + ' ' + scrape['views'])
-    #
-    #     lastpost = topic.parent.find('td', class_=["lastpost windowbg2", "lastpost lockedbg2"]).stripped_strings
-    #     scrape['lastpost'] = datetime.datetime.strptime(next(lastpost), "%a, %d %B %Y, %H:%M:%S")
-    #     # print(scrape['lastpost'])
-    #
-    #     scrape['url'] = page_url
-    #     scrape['accessed'] = datetime.datetime.now().replace(microsecond=0)
-    #
-    #     scraped_topic.append(scrape)
+        post_date = post.find('div', class_="keyinfo").find('div', class_="smalltext").stripped_strings
+        scraped_post['post_date'] = datetime.datetime.strptime([post for post in post_date][-1],
+                                                               "%a, %d %B %Y, %H:%M:%S »")
+        post_er = post.find('div', class_="poster").h4
+        if post_er.a.get('href'):
+            scraped_post['poster_id'] = post_er.a.get('href').split('=')[-1]
+        else:
+            scraped_post['poster_id'] = None
+
+        # TODO: maybe include a character limit for taking the post content
+        scraped_post['post_content'] = post.find('div', class_="post").get_text(" ", strip=True)
+
+        scraped_posts.append(scraped_post)
+
+    scraped_topic['post_data'] = scraped_posts
+
+    print(f"  topic contains: {len(scraped_topic['post_data'])} posts")
+    # [print(post['post_content']) for post in scraped_posts]
 
     return scraped_topic
