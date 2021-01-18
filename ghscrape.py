@@ -111,6 +111,7 @@ def scrape_page(page_soup, page_url='unknown'):
         # print(scrape['replies'] + ' ' + scrape['views'])
 
         lastpost = topic.parent.find('td', class_=["lastpost windowbg2", "lastpost lockedbg2"]).stripped_strings
+        # TODO: change this to last_post in data structure
         scrape['lastpost'] = datetime.datetime.strptime(next(lastpost), "%a, %d %B %Y, %H:%M:%S")
         # print(scrape['lastpost'])
 
@@ -137,14 +138,14 @@ def scrape_topics(forum_url, topic_ids, limit_topics=None, limit_date=None, requ
         current_url = base_url + topic_id + ".0"
 
         # use a test local file to check that the format parsing works
-        # print("fake scrape: " + current_url)
-        # with open("testtopic.html") as test_topic:
-        #     soup = BeautifulSoup(test_topic, 'html5lib')
+        print("fake scrape: " + current_url)
+        with open("testtopic.html") as test_topic:
+            soup = BeautifulSoup(test_topic, 'html5lib')
 
-        # access current url for page to scrape
-        print("requesting: topic " + topic_id)
-        current_page = session.get(current_url, timeout=5)
-        soup = BeautifulSoup(current_page.content, 'html5lib')
+        # # access current url for page to scrape
+        # print("requesting: topic " + topic_id)
+        # current_page = session.get(current_url, timeout=5)
+        # soup = BeautifulSoup(current_page.content, 'html5lib')
 
         # TODO: define scrape_topic() function
         current_data = scrape_topic(soup, current_url)
@@ -173,3 +174,55 @@ def scrape_topics(forum_url, topic_ids, limit_topics=None, limit_date=None, requ
 
     print(f"Scraping complete: {len(topic_data)} topics scraped")
     return topic_data
+
+
+def scrape_topic(topic_soup, page_url='unknown'):
+    """
+    Internal function to scrape topic data out of a single page of results
+    :param topic_soup:
+    :param page_url:
+    :return:
+    """
+    scraped_topic = {}
+
+    # Get the first post in the topic
+    first_post = topic_soup.find('div', id="forumposts").find(id="quickModForm").find('div', class_="post_wrapper")
+
+    # Find date the post was created (in message header bar)
+    date_created = first_post.find('div', class_="keyinfo").find('div', class_="smalltext").stripped_strings
+    scraped_topic['topic_created'] = datetime.datetime.strptime((' '.join([text for text in date_created])),
+                                                                "« on: %a, %d %B %Y, %H:%M:%S »")
+    print(scraped_topic['topic_created'])
+
+    # TODO: access post content and scrape all links (then can process later to find vendor links)
+    # TODO: also scrape number of images used in thread (this roughly shows how many renders/kits were used
+    # TODO: loop over post content, extract number of unique posters, post text (for later sentiment analysis)
+    #  and unique posts by topic starter
+
+
+    # for topic in topics.find_all('td', class_=["subject windowbg2", "subject lockedbg2"]):
+    #     scrape = {}
+    #     scrape['title'] = topic.span.a.string
+    #     scrape['topiclink'] = topic.span.a['href']
+    #     if topic.p.a:
+    #         scrape['creator'] = topic.p.a.string
+    #         scrape['creatorlink'] = topic.p.a['href']
+    #     else:
+    #         scrape['creator'] = 'banned user'
+    #         scrape['creatorlink'] = None
+    #
+    #     stats_block = topic.parent.find('td', class_=["stats windowbg", "stats lockedbg"]).stripped_strings
+    #     scrape['replies'] = next(stats_block)
+    #     scrape['views'] = next(stats_block)
+    #     # print(scrape['replies'] + ' ' + scrape['views'])
+    #
+    #     lastpost = topic.parent.find('td', class_=["lastpost windowbg2", "lastpost lockedbg2"]).stripped_strings
+    #     scrape['lastpost'] = datetime.datetime.strptime(next(lastpost), "%a, %d %B %Y, %H:%M:%S")
+    #     # print(scrape['lastpost'])
+    #
+    #     scrape['url'] = page_url
+    #     scrape['accessed'] = datetime.datetime.now().replace(microsecond=0)
+    #
+    #     scraped_topic.append(scrape)
+
+    return scraped_topic
