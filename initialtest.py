@@ -21,6 +21,6 @@ from forumclean import *
 # parse_titles(["[GB] GMK Lunar 🚀 — All Kits Will Be Made; Final Numbers Posted"])
 # parse_titles(["[GB]Enjoypbt KON MOMO (7.10~7.30)"])
 
+# clean_board_data(infilepath="data/210109ic_raw.csv", outfilepath="data/210109ic_clean2.csv")
 
-clean_board_data(infilepath="data/210109ic_raw.csv", outfilepath="data/210109ic_clean2.csv")
-
+scrape_topics("geekhack.org", ['108698'])
