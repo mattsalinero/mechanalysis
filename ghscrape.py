@@ -185,17 +185,24 @@ def scrape_topic(topic_soup, id='unknown'):
     """
     scraped_topic = {'topic_id': id}
 
-    # Get the first post in the topic
-    first_post = topic_soup.find('div', id="forumposts").find(id="quickModForm").find('div', class_="post_wrapper")
+    # Get the posts in the topic
+    posts = topic_soup.find('div', id="forumposts").find(id="quickModForm").findAll('div', class_="post_wrapper")
+    first_post = posts[0]
 
-    # Find date the post was created (in message header bar)
+    # Find data specific to first post (topic created date, full lists of links, images)
     date_created = first_post.find('div', class_="keyinfo").find('div', class_="smalltext").stripped_strings
     scraped_topic['topic_created'] = datetime.datetime.strptime((' '.join([text for text in date_created])),
                                                                 "« on: %a, %d %B %Y, %H:%M:%S »")
-    print(scraped_topic['topic_created'])
+    first_post_links = first_post.find('div', class_="post").findAll('a')
+    scraped_topic['fp_links'] = [link.get('href') for link in first_post_links]
+    first_post_images = first_post.find('div', class_="post").findAll('img')
+    scraped_topic['fp_images'] = [img.get('src') for img in first_post_images]
 
-    # TODO: access post content and scrape all links (then can process later to find vendor links)
-    # TODO: also scrape number of images used in thread (this roughly shows how many renders/kits were used
+    print(f"  topic created: {scraped_topic['topic_created']}")
+    print(f"  topic contains: {len(scraped_topic['fp_links'])} links")
+    print(f"  topic contains: {len(scraped_topic['fp_images'])} images")
+    # [print(link) for link in scraped_topic['fp_images']]
+
     # TODO: loop over post content, extract number of unique posters, post text (for later sentiment analysis?)
     #  and unique posts by topic starter
 
