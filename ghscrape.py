@@ -131,26 +131,47 @@ def scrape_topics(forum_url, topic_ids, limit_topics=None, limit_date=None, requ
     else:
         topic_ids = topic_ids[:]
 
+    topic_ids = [str(topic_id) for topic_id in topic_ids]
+
+    fields = ['topic_id', 'topic_created', 'fp_links', 'fp_images', 'post_data', 'accessed']
+    if filepath:
+        with open(filepath, 'a+', encoding="utf-8", newline='') as csvfile:
+            if csvfile.tell() == 0:
+                csvwriter = csv.DictWriter(csvfile, fieldnames=fields)
+                csvwriter.writeheader()
+            else:
+                csvfile.seek(0, 0)
+                csvreader = csv.DictReader(csvfile)
+                if csvreader.fieldnames != fields:
+                    print("unexpected fields found in already existing file")
+                    return
+
     session = requests.Session()
-    base_url = forum_url + "/index.php?topic="
+    base_url = "https://" + forum_url + "/index.php?topic="
     topic_data = []
     for topic_id in topic_ids:
 
         current_url = base_url + topic_id + ".0"
 
-        # use a test local file to check that the format parsing works
-        print("fake scrape: " + current_url)
-        with open("testtopic.html") as test_topic:
-            soup = BeautifulSoup(test_topic, 'html5lib')
+        # # use a test local file to check that the format parsing works
+        # print("fake scrape: " + current_url)
+        # with open("testtopic.html") as test_topic:
+        #     soup = BeautifulSoup(test_topic, 'html5lib')
 
-        # # access current url for page to scrape
-        # print("requesting: topic " + topic_id)
-        # current_page = session.get(current_url, timeout=5)
-        # soup = BeautifulSoup(current_page.content, 'html5lib')
+        # access current url for page to scrape
+        print("requesting: topic " + topic_id)
+        current_page = session.get(current_url, timeout=5)
+        soup = BeautifulSoup(current_page.content, 'html5lib')
 
         current_data = scrape_topic(soup, topic_id)
 
         topic_data.append(current_data)
+
+        if filepath:
+            with open(filepath, 'a', encoding="utf-8", newline='') as csvfile:
+                fields = ['topic_id', 'topic_created', 'fp_links', 'fp_images', 'post_data', 'accessed']
+                csvwriter = csv.DictWriter(csvfile, fieldnames=fields)
+                csvwriter.writerow(current_data)
 
         # TODO: implement date limit in scrape_topics()
         # if limit_date:
@@ -162,15 +183,6 @@ def scrape_topics(forum_url, topic_ids, limit_topics=None, limit_date=None, requ
         # wait to keep request rate low
         if topic_id != topic_ids[-1]:
             time.sleep(random.randint(request_interval//2, request_interval*2))
-
-    if filepath:
-        with open(filepath, 'w', encoding="utf-8", newline='') as csvfile:
-            # TODO: fix fields structure with correct field names
-            fields = ['title', 'topiclink', 'creator', 'creatorlink', 'replies', 'views', 'lastpost', 'url', 'accessed']
-            csvwriter = csv.DictWriter(csvfile, fieldnames=fields)
-
-            csvwriter.writeheader()
-            csvwriter.writerows(topic_data)
 
     print(f"Scraping complete: {len(topic_data)} topics scraped")
     return topic_data
@@ -203,7 +215,7 @@ def scrape_topic(topic_soup, topic_id='unknown'):
     print(f"  topic contains: {len(scraped_topic['fp_images'])} images")
     # [print(link) for link in scraped_topic['fp_images']]
 
-    # find data for each post on first page (including poster, time, text)
+    # find data for each post on first page (poster, time, text)
     scraped_posts = []
     for post in posts:
         scraped_post = {}
@@ -225,6 +237,7 @@ def scrape_topic(topic_soup, topic_id='unknown'):
     scraped_topic['post_data'] = scraped_posts
 
     print(f"  topic contains: {len(scraped_topic['post_data'])} posts")
-    # [print(post['post_content']) for post in scraped_posts]
+
+    scraped_topic['accessed'] = datetime.datetime.now().replace(microsecond=0)
 
     return scraped_topic
