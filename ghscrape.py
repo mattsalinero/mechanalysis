@@ -114,7 +114,7 @@ def scrape_page(page_soup, page_url='unknown'):
         # print(scrape['replies'] + ' ' + scrape['views'])
 
         lastpost = topic.parent.find('td', class_=["lastpost windowbg2", "lastpost lockedbg2"]).stripped_strings
-        # TODO: change this to last_post in data structure
+        # TODO: change this to last_post in data structure?
         scrape['lastpost'] = datetime.datetime.strptime(next(lastpost), "%a, %d %B %Y, %H:%M:%S")
         # print(scrape['lastpost'])
 
@@ -136,7 +136,7 @@ def scrape_topics(forum_url, topic_ids, limit_topics=None, limit_date=None, requ
 
     topic_ids = [str(topic_id) for topic_id in topic_ids]
 
-    fields = ['topic_id', 'topic_created', 'fp_links', 'fp_images', 'post_data', 'accessed']
+    fields = ['topic_id', 'topic_created', 'accessed']
     if filepath:
         with open(filepath, 'a+', encoding="utf-8", newline='') as csvfile:
             if csvfile.tell() == 0:
@@ -167,12 +167,11 @@ def scrape_topics(forum_url, topic_ids, limit_topics=None, limit_date=None, requ
         soup = BeautifulSoup(current_page.content, 'html5lib')
 
         current_data = scrape_topic(soup, topic_id)
+        current_data_short = dict(topic_id=current_data['topic_id'],
+                                  topic_created=current_data['topic_created'],
+                                  accessed=current_data['accessed'])
+        topic_data.append(current_data_short)
 
-        topic_data.append(current_data)
-
-        # TODO: reword how data is saved/transferred to put post-level data in it's own topic-specific json
-        #  (including list of links) as otherwise the files will be completely unreadable
-        #  - so the csv is only (topic_id, topic_created, accessed) for each topic +maybe basic analytics
         if postdir:
             json_filepath = postdir + "/topic" + topic_id + "_postdata.json"
             json_data = json.dumps(current_data, indent=4, default=(lambda x: x.__str__()))
@@ -181,9 +180,9 @@ def scrape_topics(forum_url, topic_ids, limit_topics=None, limit_date=None, requ
 
         if filepath:
             with open(filepath, 'a', encoding="utf-8", newline='') as csvfile:
-                fields = ['topic_id', 'topic_created', 'fp_links', 'fp_images', 'post_data', 'accessed']
+                fields = ['topic_id', 'topic_created', 'accessed']
                 csvwriter = csv.DictWriter(csvfile, fieldnames=fields)
-                csvwriter.writerow(current_data)
+                csvwriter.writerow(current_data_short)
 
         # TODO: implement date limit in scrape_topics()
         # if limit_date:
