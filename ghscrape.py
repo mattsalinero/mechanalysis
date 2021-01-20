@@ -2,7 +2,9 @@ import requests
 import time
 import datetime
 import csv
+import json
 import random
+import bs4
 from bs4 import BeautifulSoup
 
 
@@ -124,7 +126,8 @@ def scrape_page(page_soup, page_url='unknown'):
     return scraped_page
 
 
-def scrape_topics(forum_url, topic_ids, limit_topics=None, limit_date=None, request_interval=10, filepath=None):
+def scrape_topics(forum_url, topic_ids, limit_topics=None, limit_date=None, request_interval=10,
+                  filepath=None, postdir=None):
 
     if limit_topics and len(topic_ids) > limit_topics:
         topic_ids = topic_ids[:limit_topics]
@@ -167,6 +170,15 @@ def scrape_topics(forum_url, topic_ids, limit_topics=None, limit_date=None, requ
 
         topic_data.append(current_data)
 
+        # TODO: reword how data is saved/transferred to put post-level data in it's own topic-specific json
+        #  (including list of links) as otherwise the files will be completely unreadable
+        #  - so the csv is only (topic_id, topic_created, accessed) for each topic +maybe basic analytics
+        if postdir:
+            json_filepath = postdir + "/topic" + topic_id + "_postdata.json"
+            json_data = json.dumps(current_data, indent=4, default=(lambda x: x.__str__()))
+            with open(json_filepath, 'w') as pdfile:
+                pdfile.write(json_data)
+
         if filepath:
             with open(filepath, 'a', encoding="utf-8", newline='') as csvfile:
                 fields = ['topic_id', 'topic_created', 'fp_links', 'fp_images', 'post_data', 'accessed']
@@ -198,16 +210,16 @@ def scrape_topic(topic_soup, topic_id='unknown'):
     scraped_topic = {'topic_id': topic_id}
 
     # get the posts in the topic
-    posts = topic_soup.find('div', id="forumposts").find(id="quickModForm").findAll('div', class_="post_wrapper")
+    posts = topic_soup.find('div', id="forumposts").find(id="quickModForm").find_all('div', class_="post_wrapper")
     first_post = posts[0]
 
     # find data specific to first post (topic created date, full lists of links, images)
     date_created = first_post.find('div', class_="keyinfo").find('div', class_="smalltext").stripped_strings
     scraped_topic['topic_created'] = datetime.datetime.strptime((' '.join([text for text in date_created])),
                                                                 "« on: %a, %d %B %Y, %H:%M:%S »")
-    first_post_links = first_post.find('div', class_="post").findAll('a')
+    first_post_links = first_post.find('div', class_="post").find_all('a')
     scraped_topic['fp_links'] = [link.get('href') for link in first_post_links]
-    first_post_images = first_post.find('div', class_="post").findAll('img')
+    first_post_images = first_post.find('div', class_="post").find_all('img')
     scraped_topic['fp_images'] = [img.get('src') for img in first_post_images]
 
     print(f"  topic created: {scraped_topic['topic_created']}")
@@ -229,8 +241,26 @@ def scrape_topic(topic_soup, topic_id='unknown'):
         else:
             scraped_post['poster_id'] = None
 
-        # TODO: maybe include a character limit for taking the post content
-        scraped_post['post_content'] = post.find('div', class_="post").get_text(" ", strip=True)
+        # grabs post content for selected post (recursively)
+        def quoteless_content(source):
+            content = []
+            for child in source.children:
+                if isinstance(child, bs4.element.NavigableString):
+                    string_content = str(child).strip()
+                    if string_content:
+                        content.append(string_content)
+                    continue
+                elif child.name == "blockquote":
+                    content.append("[quoted text]")
+                    continue
+                else:
+                    child_content = quoteless_content(child)
+                    if child_content:
+                        content.extend(child_content)
+            return content
+
+        # scraped_post['post_content'] = post.find('div', class_="post").get_text(" ", strip=True)
+        scraped_post['post_content'] = "\n".join(quoteless_content(post.find('div', class_="post")))[:2000]
 
         scraped_posts.append(scraped_post)
 

@@ -23,5 +23,6 @@ from forumclean import *
 
 # clean_board_data(infilepath="data/210109ic_raw.csv", outfilepath="data/210109ic_clean2.csv")
 
-test_topics = [110530, 110511, 110455, 110355, 109403, 109307, 109140, 109000, 108983, 108949]
-scrape_topics("geekhack.org", test_topics, filepath="data/testtopicdata.csv")
+test_topics = [110511, 110355]
+# test_topics = [110530, 110511, 110455, 110355, 109403, 109307, 109140, 109000, 108983, 108949]
+scrape_topics("geekhack.org", test_topics, filepath="data/testtopicdata.csv", postdir="data/post_data")
