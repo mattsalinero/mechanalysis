@@ -21,8 +21,8 @@ from forumclean import *
 # parse_titles(["[GB] GMK Lunar 🚀 — All Kits Will Be Made; Final Numbers Posted"])
 # parse_titles(["[GB]Enjoypbt KON MOMO (7.10~7.30)"])
 
-# clean_board_data(infilepath="data/210109ic_raw.csv", outfilepath="data/210109ic_clean2.csv")
+clean_board_data(infilepath="data/210121gb_raw.csv", outfilepath="data/210121igb_clean.csv")
 
-test_topics = [110511, 110355]
-# test_topics = [110530, 110511, 110455, 110355, 109403, 109307, 109140, 109000, 108983, 108949]
-scrape_topics("geekhack.org", test_topics, filepath="data/testtopicdata.csv", postdir="data/post_data")
+# test_topics = [110511, 110355]
+# # test_topics = [110530, 110511, 110455, 110355, 109403, 109307, 109140, 109000, 108983, 108949]
+# scrape_topics("geekhack.org", test_topics, filepath="data/testtopicdata.csv", postdir="data/post_data")

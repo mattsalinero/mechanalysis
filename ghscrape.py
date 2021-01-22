@@ -26,6 +26,7 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
     # TODO: replace board url with base url (see scrape_topics())
     sorts = {'firstpost': ";sort=first_post;desc", 'lastpost': ";sort=last_post;desc", 'default': ""}
     sort_url = sorts[sort]
+    # base_url = "https://" + forum_url + "/index.php?board=" board + "."
 
     scraped_board = []
     topic_per = None

@@ -62,11 +62,12 @@ def clean_board_data(unclean_data=None, infilepath=None, outfilepath=None, retur
         return
 
 
-def parse_title(to_search, title_parser):
+def parse_title(to_search, title_parser, ic_map):
     """
     Finds thread type indicator, keyset infocodes, and keyset name from thread title
     :param to_search: str to parse as a title
     :param title_parser:
+    :param ic_map: dict for changing representation of some infocodes
     :return: tuple(str thread type, str infocode, str set name)
     """
     # TODO: fix docstring for output
@@ -83,12 +84,15 @@ def parse_title(to_search, title_parser):
 
     for subtree in title_tree.children:
         if subtree.data == 'threadcode':
-            threadtype = subtree.children[0].value
+            threadtype = subtree.children[0].value.upper()
             # print("threadtype " + threadtype)
         elif subtree.data == 'titlesection':
             for token in subtree.children:
                 if token.type == 'ICODE':
-                    infocodes.append(token.value)
+                    if token.value.upper() in ic_map:
+                        infocodes.append(ic_map[token.value.upper()])
+                    else:
+                        infocodes.append(token.value.upper())
                 else:
                     setname = " ".join([setname, token.value])
 
@@ -144,6 +148,9 @@ def parse_titles(titles):
         %ignore /[!'"█]/
     '''
 
+    ic_map = {"EPBT": "ePBT", "ENJOYPBT": "ePBT", "INFINIKEY": "IFK", "MELGEEK": "MG", "SPSA": "SA",
+              "SIGNATURE PLASTICS": "SP"}
+
     parser = Lark(title_grammar, start="topic", parser="earley")
 
     producttypes = []
@@ -152,7 +159,7 @@ def parse_titles(titles):
     setnames = []
 
     for title in titles:
-        parsed = parse_title(title, parser)
+        parsed = parse_title(title, parser, ic_map)
         producttypes.append(parsed[0])
         threadtypes.append(parsed[1])
         icodes.append(parsed[2])
