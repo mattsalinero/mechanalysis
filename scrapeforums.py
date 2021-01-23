@@ -22,5 +22,15 @@ if input("scrape interest check forum? (Y/N): ").upper() == "Y":
                  request_interval=15, filepath=raw_filepath)
     clean_board_data(infilepath=raw_filepath, outfilepath=clean_filepath)
 
+if input("scrape groupbuy topics? (Y/N): ").upper() == "Y":
+    num_topics = int(input("enter number of topics to scrape: "))
+    offset = int(input("enter offset: "))
+    date_code = input("enter datecode of topics to scrape: ")
+    topiclist_path = "data/" + date_code + "topiclist.csv"
+    with open(topiclist_path, 'r', encoding="utf-8", newline='') as csvfile:
+        topic_reader = csv.DictReader(csvfile)
+        topic_ids = [row['topic_id'] for row in topic_reader]
 
-
+    topic_path = base_filepath + "td.csv"
+    scrape_topics("geekhack.org", topic_ids, limit_topics=num_topics, offset=offset, filepath=topic_path,
+                  postdir="data/post_data")

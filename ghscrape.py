@@ -127,11 +127,14 @@ def scrape_page(page_soup, page_url='unknown'):
     return scraped_page
 
 
-def scrape_topics(forum_url, topic_ids, limit_topics=None, limit_date=None, request_interval=10,
+def scrape_topics(forum_url, topic_ids, limit_topics=None, offset=0, limit_date=None, request_interval=10,
                   filepath=None, postdir=None):
 
     if limit_topics and len(topic_ids) > limit_topics:
-        topic_ids = topic_ids[:limit_topics]
+        if offset > len(topic_ids):
+            print(f"offset of {offset} larger than {len(topic_ids)} provided topics")
+            return
+        topic_ids = topic_ids[offset:(limit_topics + offset)]
     else:
         topic_ids = topic_ids[:]
 
