@@ -64,17 +64,14 @@ def clean_board_data(in_data=None, in_filepath=None, out_filepath=None, return_d
         return
 
 
-def parse_title(to_search, title_parser, ic_map=None):
+def parse_title(to_search, title_parser):
     """
     Finds thread type indicator, keyset infocodes, and keyset name from thread title
     :param to_search: str to parse as a title
     :param title_parser:
-    :param ic_map: dict for changing representation of some infocodes
     :return: tuple(str thread type, str infocode, str set name)
     """
     # TODO: fix docstring for output
-    if ic_map is None:
-        ic_map = {}
 
     title_tree = title_parser.parse(emoji.demojize(to_search)).children[0]
     # TODO: Move the actual parsing call into the calling function, call this traverse_parsed_title or something
@@ -92,15 +89,13 @@ def parse_title(to_search, title_parser, ic_map=None):
         if subtree.data == 'threadcode':
             threadtype = subtree.children[0].value.upper()
             # print("threadtype " + threadtype)
-        elif subtree.data == 'titlesection':
-            for token in subtree.children:
-                if token.type == 'ICODE':
-                    if token.value.upper() in ic_map:
-                        infocodes.append(ic_map[token.value.upper()])
-                    else:
-                        infocodes.append(token.value.upper())
+        elif subtree.data == 'titlesection' or subtree.data == 'invtitlesection':
+            for section in subtree.children:
+                if section.data == 'icodes':
+                    for icode in section.children:
+                        infocodes.append(icode.data.upper())
                 else:
-                    setname = " ".join([setname, token.value])
+                    setname = " ".join([namepart for namepart in section.children])
 
             # print("infocodes " + str(infocodes))
             # print("setname " + setname)
@@ -116,10 +111,6 @@ def parse_titles(titles):
     """
     # TODO: fix docstring for output
     # TODO: add tai-hao (and potential variations like SPSA) to list of infocodes
-    # TODO: add the ic_map to a separate file that is read in or appropriately adjust grammar
-
-    ic_map = {"EPBT": "ePBT", "ENJOYPBT": "ePBT", "INFINIKEY": "IFK", "MELGEEK": "MG", "SPSA": "SA",
-              "SIGNATURE PLASTICS": "SP"}
 
     parser = Lark.open("gb_title.lark", start="topic", parser="earley")
 
@@ -129,7 +120,7 @@ def parse_titles(titles):
     setnames = []
 
     for title in titles:
-        parsed = parse_title(title, parser, ic_map)
+        parsed = parse_title(title, parser)
         producttypes.append(parsed[0])
         threadtypes.append(parsed[1])
         icodes.append(parsed[2])

@@ -5,23 +5,36 @@ keycapthread.2: threadcode? (titlesection | invtitlesection) endsection?
 otherthread: threadcode? _ANYBLOCK+
 
 threadcode.2: _LEADBLOCK* _BRACO THCODE _BRACC
-titlesection: _LEADBLOCK* _infocode+ NAMEBLOCK+
-invtitlesection: INVNAMEBLOCK+ _infocode+
+titlesection: _LEADBLOCK* icodes namesection
+invtitlesection: namesection icodes
 endsection.2: (_SEPARATOR | notname) (_SEPARATOR | notname | _ANYBLOCK)*
 
-_infocode.3: ICODE 
+icodes.3: icode+
+icode: /GMK/i -> gmk
+     | /PBT/i -> pbt
+     | (/ePBT/i | /EnjoyPBT/i) -> epbt
+     | (/IFK/i | /Infinikey/i) -> ifk
+     | (/MG(?=\W)/i | /Melgeek/i) -> mg
+     | (/SA(?=\W)/i | /SPSA(?=\W)/i) -> sa
+     | (/SP(?=\W)/i | /Signature Plastics/i) -> sp
+     | /HSA/i -> hsa
+     | /KAT(?=\W)/i -> kat
+     | /KAM(?=\W)/i -> kam
+     | /DSA/i -> dsa
+     | /JTK/i -> jtk
+     | /CRP/i -> crp
+     | /MDA/i -> mda
+     | /XDA/i -> xda
+     | /DCS/i -> dcs
+     | /GeekArk/i -> gkak
+
+namesection: MISCBLOCK+
 notname.2: GBSTATUS | /key(cap|set)*s*/i | /GB|groupbuy|(group buy)/i | /ready/i | /\w+shot/i | /update[ds]*/i
 
 MISCBLOCK: /[\w&]+([\w.:*,&-\\\/]+\w)*/
-NAMEBLOCK: MISCBLOCK
-INVNAMEBLOCK: MISCBLOCK
 _LEADBLOCK: MISCBLOCK
 _ANYBLOCK: /[\w\W]+/
 
-ICODE: /GMK/i | /PBT/i | /ePBT/i | /EnjoyPBT/i | /IFK/i | /Infinikey/i
-       | /MG(?=\W)/i | /Melgeek/i | /SA(?=\W)/i | /SP(?=\W)/i | /SPSA(?=\W)/i | /Signature Plastics/i
-       | /HSA/i | /KAT(?=\W)/i | /KAM(?=\W)/i | /DSA/i | /JTK/i | /CRP/i
-       | /MDA/i | /XDA/i | /DCS/i
 GBSTATUS: /ship(ping|ed)*/i | /live/i | /clos(ed|ing)*/i | /complet(ed|e|ing)/i | /cancel(ed|led)/i
        | /finish(ed|ing)*/i | /final(ized|izing)*/i | /sort(ed|ing)*/i
        | /production/i | /extras*/i | /hold/i
