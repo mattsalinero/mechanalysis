@@ -6,30 +6,32 @@ import pandas as pd
 from lark import Lark
 
 
-def clean_board_data(unclean_data=None, infilepath=None, outfilepath=None, returndf=True):
+def clean_board_data(in_data=None, in_filepath=None, out_filepath=None, return_df=True):
     """
     Cleans scraped data from forum into more readable format
-    :param unclean_data:
-    :param infilepath:
-    :param outfilepath:
-    :param returndf:
+    :param in_data:
+    :param in_filepath:
+    :param out_filepath:
+    :param return_df:
     :return: pandas DataFrame of cleaned data
     """
     # TODO: potentially move clean_board_data() to the initial scraping step, break parse_title(s) into own thing
 
     clean_data = pd.DataFrame()
-    if unclean_data:
-        if type(unclean_data) is list and type(unclean_data[0]) is dict:
-            unclean_data = pd.DataFrame(unclean_data)
-    elif infilepath:
-        unclean_data = pd.read_csv(infilepath)
+    if in_data:
+        if type(in_data) is list and type(in_data[0]) is dict:
+            unclean_data = pd.DataFrame(in_data)
+    elif in_filepath:
+        unclean_data = pd.read_csv(in_filepath)
     else:
         # TODO: error handling for improper input
         pass
 
     print(f"Parsing {len(unclean_data.index)} records")
 
-    # parse for topic number
+    # TODO: use from_dict or from_record to actually create the dataframe or just implement this not using
+    #  dataframes/pandas -> I don't think it's needed in this case, can also move to a per-record basis for parsing
+    #  and only consolidate at the end
     clean_data['topic_id'] = unclean_data['topiclink'].apply(lambda x: x.split('=')[-1].split('.')[0])
 
     # parse information from title
@@ -52,17 +54,17 @@ def clean_board_data(unclean_data=None, infilepath=None, outfilepath=None, retur
     clean_data['title'] = unclean_data['title']
 
     print(f"Parsed {len(clean_data.index)} records")
-    if outfilepath:
-        clean_data.to_csv(outfilepath)
-        print(f"Saved to {outfilepath}")
+    if out_filepath:
+        clean_data.to_csv(out_filepath)
+        print(f"Saved to {out_filepath}")
 
-    if returndf:
+    if return_df:
         return clean_data
     else:
         return
 
 
-def parse_title(to_search, title_parser, ic_map):
+def parse_title(to_search, title_parser, ic_map=None):
     """
     Finds thread type indicator, keyset infocodes, and keyset name from thread title
     :param to_search: str to parse as a title
@@ -71,7 +73,11 @@ def parse_title(to_search, title_parser, ic_map):
     :return: tuple(str thread type, str infocode, str set name)
     """
     # TODO: fix docstring for output
+    if ic_map is None:
+        ic_map = {}
+
     title_tree = title_parser.parse(emoji.demojize(to_search)).children[0]
+    # TODO: Move the actual parsing call into the calling function, call this traverse_parsed_title or something
 
     producttype = "unknown"
     threadtype = "unknown"
@@ -110,6 +116,7 @@ def parse_titles(titles):
     """
     # TODO: fix docstring for output
     # TODO: add tai-hao (and potential variations like SPSA) to list of infocodes
+    # TODO: add the grammar and ic_map to a separate file that is read in
     title_grammar = r'''
         topic: keycapthread | otherthread
         keycapthread.2: threadcode? (titlesection | invtitlesection) endsection?      
@@ -166,3 +173,43 @@ def parse_titles(titles):
         setnames.append(parsed[3])
 
     return producttypes, threadtypes, icodes, setnames
+
+
+def parse_basic_row(in_row):
+    basic_data = {'creator': None, 'creator_id': None, 'views': None, 'replies': None, 'board': None,
+                  'access_date': None, 'title': None}
+
+    # parse for topic id
+    if 'topiclink' in in_row and in_row['topiclink']:
+        basic_data['topic_id'] = in_row['topiclink'].split('=')[-1].split('.')[0]
+    else:
+        raise ValueError("missing required topic id")
+    # TODO: write unit test for checking missing topiclink
+
+    # parse for creator info
+    if 'creator' in in_row and in_row['creator']:
+        basic_data['creator'] = in_row['creator']
+    if 'creatorlink' in in_row and in_row['creatorlink']:
+        basic_data['creator_id'] = in_row['creatorlink'].split('=')[-1]
+    # TODO: write unit test for parsing creator information
+
+    # parse for topic stats
+    if 'views' in in_row and in_row['views']:
+        basic_data['views'] = int(in_row['views'].split()[0])
+    if 'replies' in in_row and in_row['replies']:
+        basic_data['replies'] = int(in_row['replies'].split()[0])
+    # TODO: write unit test for parsing basic view/reply data
+
+    # parse for board number
+    if 'url' in in_row and in_row['url']:
+        basic_data['board'] = in_row['url'].split("board=")[-1].split('.')[0]
+    # TODO: write unit test for parsing board number
+
+    # parse for access data and title
+    if 'accessed' in in_row and in_row['accessed']:
+        basic_data['access_date'] = in_data['accessed']
+    if 'title' in in_row and in_row['title']:
+        basic_data['title'] = in_data['title']
+    # TODO: write unit test for directly importing title and access date
+
+    return basic_data

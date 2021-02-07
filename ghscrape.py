@@ -34,6 +34,7 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
     session = requests.Session()
     session.get(board_url, timeout=5)
     for x in range(limit_pages):
+        # TODO: make topic_per into own function using above session call outside loop to pull metadata/ranges
         if topic_per:
             current_url = board_url + str(x * topic_per) + sort_url
 

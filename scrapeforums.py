@@ -13,14 +13,14 @@ if input("scrape groupbuy forum? (Y/N): ").upper() == "Y":
     clean_filepath = base_filepath + "gb_clean.csv"
     scrape_board("https://geekhack.org/index.php?board=70.", limit_pages=40,
                  request_interval=15, filepath=raw_filepath)
-    clean_board_data(infilepath=raw_filepath, outfilepath=clean_filepath)
+    clean_board_data(in_filepath=raw_filepath, out_filepath=clean_filepath)
 
 if input("scrape interest check forum? (Y/N): ").upper() == "Y":
     raw_filepath = base_filepath + "ic_raw.csv"
     clean_filepath = base_filepath + "ic_clean.csv"
     scrape_board("https://geekhack.org/index.php?board=132.", limit_pages=65,
                  request_interval=15, filepath=raw_filepath)
-    clean_board_data(infilepath=raw_filepath, outfilepath=clean_filepath)
+    clean_board_data(in_filepath=raw_filepath, out_filepath=clean_filepath)
 
 if input("scrape groupbuy topics? (Y/N): ").upper() == "Y":
     num_topics = int(input("enter number of topics to scrape: "))
