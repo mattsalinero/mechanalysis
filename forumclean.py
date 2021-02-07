@@ -176,7 +176,7 @@ def parse_titles(titles):
 
 
 def parse_basic_row(in_row):
-    basic_data = {'creator': None, 'creator_id': None, 'views': None, 'replies': None, 'board': None,
+    basic_data = {'topic_id': None, 'creator': None, 'creator_id': None, 'views': None, 'replies': None, 'board': None,
                   'access_date': None, 'title': None}
 
     # parse for topic id
@@ -184,32 +184,27 @@ def parse_basic_row(in_row):
         basic_data['topic_id'] = in_row['topiclink'].split('=')[-1].split('.')[0]
     else:
         raise ValueError("missing required topic id")
-    # TODO: write unit test for checking missing topiclink
 
     # parse for creator info
     if 'creator' in in_row and in_row['creator']:
         basic_data['creator'] = in_row['creator']
     if 'creatorlink' in in_row and in_row['creatorlink']:
         basic_data['creator_id'] = in_row['creatorlink'].split('=')[-1]
-    # TODO: write unit test for parsing creator information
 
     # parse for topic stats
     if 'views' in in_row and in_row['views']:
         basic_data['views'] = int(in_row['views'].split()[0])
     if 'replies' in in_row and in_row['replies']:
         basic_data['replies'] = int(in_row['replies'].split()[0])
-    # TODO: write unit test for parsing basic view/reply data
 
     # parse for board number
     if 'url' in in_row and in_row['url']:
         basic_data['board'] = in_row['url'].split("board=")[-1].split('.')[0]
-    # TODO: write unit test for parsing board number
 
     # parse for access data and title
     if 'accessed' in in_row and in_row['accessed']:
-        basic_data['access_date'] = in_data['accessed']
+        basic_data['access_date'] = in_row['accessed']
     if 'title' in in_row and in_row['title']:
-        basic_data['title'] = in_data['title']
-    # TODO: write unit test for directly importing title and access date
+        basic_data['title'] = in_row['title']
 
     return basic_data
