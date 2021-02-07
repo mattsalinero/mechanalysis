@@ -116,49 +116,12 @@ def parse_titles(titles):
     """
     # TODO: fix docstring for output
     # TODO: add tai-hao (and potential variations like SPSA) to list of infocodes
-    # TODO: add the grammar and ic_map to a separate file that is read in
-    title_grammar = r'''
-        topic: keycapthread | otherthread
-        keycapthread.2: threadcode? (titlesection | invtitlesection) endsection?      
-        otherthread: threadcode? _ANYBLOCK+
-
-        threadcode.2: _LEADBLOCK* _BRACO THCODE _BRACC
-        titlesection: _LEADBLOCK* _infocode+ NAMEBLOCK+
-        invtitlesection: INVNAMEBLOCK+ _infocode+
-        endsection.2: (_SEPARATOR | notname) (_SEPARATOR | notname | _ANYBLOCK)*
-
-        _infocode.3: ICODE 
-        notname.2: GBSTATUS | /key(cap|set)*s*/i | /GB|groupbuy|(group buy)/i | /ready/i | /\w+shot/i | /update[ds]*/i
-
-        MISCBLOCK: /[\w&]+([\w.:*,&-\\\/]+\w)*/
-        NAMEBLOCK: MISCBLOCK
-        INVNAMEBLOCK: MISCBLOCK
-        _LEADBLOCK: MISCBLOCK
-        _ANYBLOCK: /[\w\W]+/
-
-        ICODE: /GMK/i | /PBT/i | /ePBT/i | /EnjoyPBT/i | /IFK/i | /Infinikey/i
-               | /MG(?=\W)/i | /Melgeek/i | /SA(?=\W)/i | /SP(?=\W)/i | /SPSA(?=\W)/i | /Signature Plastics/i
-               | /HSA/i | /KAT(?=\W)/i | /KAM(?=\W)/i | /DSA/i | /JTK/i | /CRP/i
-               | /MDA/i | /XDA/i | /DCS/i
-        GBSTATUS: /ship(ping|ed)*/i | /live/i | /clos(ed|ing)*/i | /complet(ed|e|ing)/i | /cancel(ed|led)/i
-               | /finish(ed|ing)*/i | /final(ized|izing)*/i | /sort(ed|ing)*/i
-               | /production/i | /extras*/i | /hold/i
-        THCODE: /\w+/
-
-        _SEPARATOR: /[-:;,+*.\|~\\\/]+/ | _BRACO | _BRACC
-        // EMOJI: /:\w+:/
-        _BRACO: /[\[{(<「]/
-        _BRACC: /[]})>」]/
-
-        %import common.WS
-        %ignore WS
-        %ignore /[!'"█]/
-    '''
+    # TODO: add the ic_map to a separate file that is read in or appropriately adjust grammar
 
     ic_map = {"EPBT": "ePBT", "ENJOYPBT": "ePBT", "INFINIKEY": "IFK", "MELGEEK": "MG", "SPSA": "SA",
               "SIGNATURE PLASTICS": "SP"}
 
-    parser = Lark(title_grammar, start="topic", parser="earley")
+    parser = Lark.open("gb_title.lark", start="topic", parser="earley")
 
     producttypes = []
     threadtypes = []
@@ -176,6 +139,7 @@ def parse_titles(titles):
 
 
 def parse_basic_row(in_row):
+    # TODO: add docstring
     basic_data = {'topic_id': None, 'creator': None, 'creator_id': None, 'views': None, 'replies': None, 'board': None,
                   'access_date': None, 'title': None}
 
