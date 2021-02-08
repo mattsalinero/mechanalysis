@@ -27,6 +27,7 @@ icode.3: /GMK/i -> gmk
      | /XDA/i -> xda
      | /DCS/i -> dcs
      | /GeekArk/i -> gkak
+     | /Tai[ -]?Hao/i -> th
 
 namesection: MISCBLOCK+
 notname.2: GBSTATUS | /key(cap|set)*s*/i | /GB|groupbuy|(group buy)/i | /ready/i | /\w+shot/i | /update[ds]*/i

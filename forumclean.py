@@ -65,20 +65,19 @@ def clean_board_data(in_data=None, in_filepath=None, out_filepath=None, return_d
         return
 
 
-def parse_topic_data(topics):
+def parse_topic_data(input_topics):
     """
-    Finds thread type indicator, keyset infocodes, and keyset name for list of thread titles
-    :param topics: list[str]
-    :return: tuple(list[str] thread type, list[str] infocode, list[str] set name)
+    Extracts topic information available in topic index for list of topics
+    :param input_topics: list[dict] each element is contains extracted data for one topic
+    :return: list[dict] containing extracted data for each topic
     """
-    # TODO: fix docstring in general
-    # TODO: add tai-hao (and potential variations like SPSA) to list of infocodes
-
+    # set up parser using grammar file
     grammar = Path(__file__).parent / "gb_title.lark"
     parser = Lark.open(grammar, start="topic", parser="earley")
 
+    # extract and aggregate relevant data
     topic_index_data = []
-    for topic in topics:
+    for topic in input_topics:
         topic_data = parse_basic(topic)
         topic_data.update(parse_title(topic['title'], parser))
         topic_index_data.append(topic_data)
