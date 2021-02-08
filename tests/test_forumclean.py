@@ -109,13 +109,13 @@ class TestParseTitle(TestCase):
             parse_title("", parser)
 
 
-class TestParseTopic(TestCase):
-    def test_parse_topic_data(self):
+class TestParseBoard(TestCase):
+    def test_parse_board_data(self):
         testinput = [{'topiclink': "https://testsite.org/index.php?topic=111111.0", 'title': "GMK test1"},
                      {'topiclink': "https://testsite.org/index.php?topic=222222.0", 'title': "PBT test2"},
                      {'topiclink': "https://testsite.org/index.php?topic=333333.0", 'title': "IFK test3"}
                      ]
-        testoutput = parse_topic_data(testinput)
+        testoutput = parse_board_data(testinput)
         self.assertEqual(testoutput[0]['topic_id'], "111111")
         self.assertEqual(testoutput[1]['topic_id'], "222222")
         self.assertEqual(testoutput[2]['topic_id'], "333333")

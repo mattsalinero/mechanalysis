@@ -7,68 +7,55 @@ import pandas as pd
 from lark import Lark
 
 
-def clean_board_data(in_data=None, in_filepath=None, out_filepath=None, return_df=True):
+def clean_board_data(in_data=None, in_filepath=None, out_filepath=None):
     """
-    Cleans scraped data from forum into more readable format
-    :param in_data:
-    :param in_filepath:
-    :param out_filepath:
-    :param return_df:
-    :return: pandas DataFrame of cleaned data
+    Cleans scraped data from board index page into more readable format, supports reading from and saving to files
+    :param in_data: list[dict] each element is extracted data for one topic on board index page
+     (priority over in_filepath)
+    :param in_filepath: filepath to csv equivalent of in_data
+    :param out_filepath: (optional) filepath to save resulting data
+    :return: list[dict] of cleaned data
     """
-    # TODO: potentially move clean_board_data() to the initial scraping step, break parse_title(s) into own thing
+    # TODO: make another function to deal with DataFrame input (clean_board_dataframe()?), leave this one for list[dict]
+    #  can also have clean_board_database() eventually
+    # TODO: implement unit tests for clean_board_data()
 
-    clean_data = pd.DataFrame()
     if in_data:
         if type(in_data) is list and type(in_data[0]) is dict:
-            unclean_data = pd.DataFrame(in_data)
+            raw_data = in_data
+        else:
+            raise ValueError("improperly formatted input data")
     elif in_filepath:
-        unclean_data = pd.read_csv(in_filepath)
+        with open(in_filepath, 'r', encoding="utf-8", newline='') as in_reader:
+            in_reader = csv.DictReader(in_reader)
+            raw_data = [csv_topic for csv_topic in in_reader]
     else:
-        # TODO: error handling for improper input
-        pass
+        raise ValueError("no valid input provided")
 
-    print(f"Parsing {len(unclean_data.index)} records")
+    print(f"Parsing {len(raw_data)} records")
 
-    # TODO: use from_dict or from_record to actually create the dataframe or just implement this not using
-    #  dataframes/pandas -> I don't think it's needed in this case, can also move to a per-record basis for parsing
-    #  and only consolidate at the end
-    clean_data['topic_id'] = unclean_data['topiclink'].apply(lambda x: x.split('=')[-1].split('.')[0])
+    # parse received data
+    out_data = parse_board_data(raw_data)
+    print(f"Parsed {len(out_data)} records")
 
-    # parse information from title
-    clean_data['product_type'], clean_data['thread_type'], clean_data['info_codes'], clean_data['set_name'] \
-        = parse_topic_data(unclean_data['title'])
-
-    # parse for creator info
-    clean_data['creator'] = unclean_data['creator']
-    clean_data['creator_id'] = \
-        unclean_data['creatorlink'].loc[unclean_data['creatorlink'].notna()].apply(lambda x: x.split('=')[-1])
-
-    # parse for stats
-    clean_data['views'] = unclean_data['views'].apply(lambda x: int(x.split()[0]))
-    clean_data['replies'] = unclean_data['replies'].apply(lambda x: int(x.split()[0]))
-
-    # parse for board number
-    clean_data['board'] = unclean_data['url'].apply(lambda x: x.split("board=")[-1].split('.')[0])
-
-    clean_data['access_date'] = unclean_data['accessed']
-    clean_data['title'] = unclean_data['title']
-
-    print(f"Parsed {len(clean_data.index)} records")
     if out_filepath:
-        clean_data.to_csv(out_filepath)
+        # save data to csv - note this does not include an index field
+        fields = ['topic_id', 'product_type', 'thread_type', 'info_codes', 'set_name', 'creator', 'creator_id', 'views',
+                  'replies', 'board', 'access_date', 'title']
+        with open(in_filepath, 'w', encoding="utf-8", newline='') as out_csv:
+            out_writer = csv.DictWriter(out_csv, fieldnames=fields)
+            out_writer.writeheader()
+            out_writer.writerows(out_data)
+
         print(f"Saved to {out_filepath}")
 
-    if return_df:
-        return clean_data
-    else:
-        return
+    return out_data
 
 
-def parse_topic_data(input_topics):
+def parse_board_data(input_topics):
     """
-    Extracts topic information available in topic index for list of topics
-    :param input_topics: list[dict] each element is contains extracted data for one topic
+    Extracts topic information available in board index for list of topics
+    :param input_topics: list[dict] each element is extracted data for one topic
     :return: list[dict] containing extracted data for each topic
     """
     # set up parser using grammar file
@@ -119,7 +106,7 @@ def parse_title(input_title, title_parser):
 
 def parse_basic(input_topic):
     """
-    Parses basic data from topic information available in topic index. Does not do complex parsing on title
+    Parses basic data from topic information available in board index. Does not do complex parsing on title
     :param input_topic: dict containing extracted data for one topic
     :return: dict containing topic id, creator (name), creator id, views, replies, board, access date, and raw title
     """
