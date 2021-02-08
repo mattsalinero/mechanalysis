@@ -17,9 +17,9 @@ from forumclean import *
 
 # testdata = clean_board_data(scraped_data, filepath="data/210108test.csv")
 
-print(parse_titles(["[GB] GMK Red & Blue Samurai (GB Closed)"]))
-print(parse_titles(["[GB] GMK Lunar 🚀 — All Kits Will Be Made; Final Numbers Posted"]))
-print(parse_titles(["[GB]Enjoypbt KON MOMO (7.10~7.30)"]))
+print(parse_topic_data(["[GB] GMK Red & Blue Samurai (GB Closed)"]))
+print(parse_topic_data(["[GB] GMK Lunar 🚀 — All Kits Will Be Made; Final Numbers Posted"]))
+print(parse_topic_data(["[GB]Enjoypbt KON MOMO (7.10~7.30)"]))
 
 # clean_board_data(in_filepath="data/210121gb_raw.csv", out_filepath="data/210121gb_clean.csv")
 # clean_board_data(in_filepath="data/210121ic_raw.csv", out_filepath="data/210121ic_clean.csv")

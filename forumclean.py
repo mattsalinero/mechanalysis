@@ -36,7 +36,7 @@ def clean_board_data(in_data=None, in_filepath=None, out_filepath=None, return_d
 
     # parse information from title
     clean_data['product_type'], clean_data['thread_type'], clean_data['info_codes'], clean_data['set_name'] \
-        = parse_titles(unclean_data['title'])
+        = parse_topic_data(unclean_data['title'])
 
     # parse for creator info
     clean_data['creator'] = unclean_data['creator']
@@ -62,6 +62,24 @@ def clean_board_data(in_data=None, in_filepath=None, out_filepath=None, return_d
         return clean_data
     else:
         return
+
+
+def parse_topic_data(topics):
+    """
+    Finds thread type indicator, keyset infocodes, and keyset name for list of thread titles
+    :param topics: list[str]
+    :return: tuple(list[str] thread type, list[str] infocode, list[str] set name)
+    """
+    # TODO: fix docstring in general
+    # TODO: add tai-hao (and potential variations like SPSA) to list of infocodes
+
+    parser = Lark.open("gb_title.lark", start="topic", parser="earley")
+
+    topic_data = []
+    for topic in topics:
+        topic_data.append(parse_basic_row(topic).update(parse_title(topic, parser)))
+
+    return topic_data
 
 
 def parse_title(to_search, title_parser):
@@ -96,25 +114,6 @@ def parse_title(to_search, title_parser):
                     title_data['set_name'] = " ".join([namepart for namepart in section.children])
 
     return title_data
-
-
-def parse_titles(titles):
-    """
-    Finds thread type indicator, keyset infocodes, and keyset name for list of thread titles
-    :param titles: list[str]
-    :return: tuple(list[str] thread type, list[str] infocode, list[str] set name)
-    """
-    # TODO: fix docstring for output
-    # TODO: add tai-hao (and potential variations like SPSA) to list of infocodes
-
-    parser = Lark.open("gb_title.lark", start="topic", parser="earley")
-
-    titles_data = []
-
-    for title in titles:
-        titles_data.append(parse_title(title, parser))
-
-    return titles_data
 
 
 def parse_basic_row(in_row):
