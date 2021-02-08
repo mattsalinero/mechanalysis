@@ -76,31 +76,25 @@ def parse_title(to_search, title_parser):
     title_tree = title_parser.parse(emoji.demojize(to_search)).children[0]
     # TODO: Move the actual parsing call into the calling function, call this traverse_parsed_title or something
 
-    producttype = "unknown"
-    threadtype = "unknown"
-    infocodes = []
-    setname = ""
+    title_data = {'product_type': None, 'thread_type': None, 'info_codes': None, 'set_name': None}
 
     if title_tree.data == 'keycapthread':
-        producttype = "keycaps"
-        # print("producttype " + producttype)
+        title_data['product_type'] = "keycaps"
 
     for subtree in title_tree.children:
         if subtree.data == 'threadcode':
-            threadtype = subtree.children[0].value.upper()
-            # print("threadtype " + threadtype)
+            title_data['thread_type'] = subtree.children[0].value.upper()
         elif subtree.data == 'titlesection' or subtree.data == 'invtitlesection':
             for section in subtree.children:
                 if section.data == 'icodes':
+                    infocodes = []
                     for icode in section.children:
                         infocodes.append(icode.data.upper())
+                    title_data['info_codes'] = infocodes
                 else:
-                    setname = " ".join([namepart for namepart in section.children])
+                    title_data['set_name'] = " ".join([namepart for namepart in section.children])
 
-            # print("infocodes " + str(infocodes))
-            # print("setname " + setname)
-
-    return producttype, threadtype, infocodes, setname
+    return title_data
 
 
 def parse_titles(titles):
@@ -114,19 +108,12 @@ def parse_titles(titles):
 
     parser = Lark.open("gb_title.lark", start="topic", parser="earley")
 
-    producttypes = []
-    threadtypes = []
-    icodes = []
-    setnames = []
+    titles_data = []
 
     for title in titles:
-        parsed = parse_title(title, parser)
-        producttypes.append(parsed[0])
-        threadtypes.append(parsed[1])
-        icodes.append(parsed[2])
-        setnames.append(parsed[3])
+        titles_data.append(parse_title(title, parser))
 
-    return producttypes, threadtypes, icodes, setnames
+    return titles_data
 
 
 def parse_basic_row(in_row):
