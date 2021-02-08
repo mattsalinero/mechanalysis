@@ -79,7 +79,7 @@ def parse_topic_data(topics):
 
     topic_index_data = []
     for topic in topics:
-        topic_data = parse_basic_row(topic)
+        topic_data = parse_basic(topic)
         topic_data.update(parse_title(topic['title'], parser))
         topic_index_data.append(topic_data)
 
@@ -94,7 +94,6 @@ def parse_title(input_title, title_parser):
     :param title_parser: LARK parser used to interpret title
     :return: dict containing product_type, thread_type, info_codes, set_name (all default to None)
     """
-
     if not input_title:
         raise ValueError("invalid/empty input title")
 
@@ -119,37 +118,41 @@ def parse_title(input_title, title_parser):
     return title_data
 
 
-def parse_basic_row(in_row):
-    # TODO: add docstring
+def parse_basic(input_topic):
+    """
+    Parses basic data from topic information available in topic index. Does not do complex parsing on title
+    :param input_topic: dict containing extracted data for one topic
+    :return: dict containing topic id, creator (name), creator id, views, replies, board, access date, and raw title
+    """
     basic_data = {'topic_id': None, 'creator': None, 'creator_id': None, 'views': None, 'replies': None, 'board': None,
                   'access_date': None, 'title': None}
 
     # parse for topic id
-    if 'topiclink' in in_row and in_row['topiclink']:
-        basic_data['topic_id'] = in_row['topiclink'].split('=')[-1].split('.')[0]
+    if 'topiclink' in input_topic and input_topic['topiclink']:
+        basic_data['topic_id'] = input_topic['topiclink'].split('=')[-1].split('.')[0]
     else:
         raise ValueError("missing required topic id")
 
     # parse for creator info
-    if 'creator' in in_row and in_row['creator']:
-        basic_data['creator'] = in_row['creator']
-    if 'creatorlink' in in_row and in_row['creatorlink']:
-        basic_data['creator_id'] = in_row['creatorlink'].split('=')[-1]
+    if 'creator' in input_topic and input_topic['creator']:
+        basic_data['creator'] = input_topic['creator']
+    if 'creatorlink' in input_topic and input_topic['creatorlink']:
+        basic_data['creator_id'] = input_topic['creatorlink'].split('=')[-1]
 
     # parse for topic stats
-    if 'views' in in_row and in_row['views']:
-        basic_data['views'] = int(in_row['views'].split()[0])
-    if 'replies' in in_row and in_row['replies']:
-        basic_data['replies'] = int(in_row['replies'].split()[0])
+    if 'views' in input_topic and input_topic['views']:
+        basic_data['views'] = int(input_topic['views'].split()[0])
+    if 'replies' in input_topic and input_topic['replies']:
+        basic_data['replies'] = int(input_topic['replies'].split()[0])
 
     # parse for board number
-    if 'url' in in_row and in_row['url']:
-        basic_data['board'] = in_row['url'].split("board=")[-1].split('.')[0]
+    if 'url' in input_topic and input_topic['url']:
+        basic_data['board'] = input_topic['url'].split("board=")[-1].split('.')[0]
 
     # parse for access data and title
-    if 'accessed' in in_row and in_row['accessed']:
-        basic_data['access_date'] = in_row['accessed']
-    if 'title' in in_row and in_row['title']:
-        basic_data['title'] = in_row['title']
+    if 'accessed' in input_topic and input_topic['accessed']:
+        basic_data['access_date'] = input_topic['accessed']
+    if 'title' in input_topic and input_topic['title']:
+        basic_data['title'] = input_topic['title']
 
     return basic_data

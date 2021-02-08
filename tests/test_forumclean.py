@@ -4,19 +4,19 @@ from unittest import TestCase
 
 
 class TestParseBasic(TestCase):
-    def test_parse_basic_row_topic_id(self):
+    def test_parse_basic_topic_id(self):
         testinput = {'topiclink': "https://testsite.org/index.php?topic=123456.0"}
-        self.assertEqual(parse_basic_row(testinput)['topic_id'], "123456")
+        self.assertEqual(parse_basic(testinput)['topic_id'], "123456")
 
-    def test_parse_basic_row_bad_topic_id(self):
+    def test_parse_basic_bad_topic_id(self):
         blankinput = {'topiclink': None, 'creator': None, 'creatorlink': None, 'views': None, 'replies': None,
                       'lastpost': None, 'url': None, 'accessed': None, 'title': None}
         with self.assertRaises(ValueError):
-            parse_basic_row(blankinput)
+            parse_basic(blankinput)
         with self.assertRaises(ValueError):
-            parse_basic_row({})
+            parse_basic({})
 
-    def test_parse_basic_row_proper_input(self):
+    def test_parse_basic_proper_input(self):
         testinput = {'title': "test title",
                      'topiclink': "https://testsite.org/index.php?topic=123456.0",
                      'creator': "test creator",
@@ -28,7 +28,7 @@ class TestParseBasic(TestCase):
                      'accessed': datetime.datetime.fromisoformat("2002-02-02 02:02:02")
                      }
 
-        testoutput = parse_basic_row(testinput)
+        testoutput = parse_basic(testinput)
 
         self.assertEqual(testoutput['creator'], "test creator")
         self.assertEqual(testoutput['creator_id'], "123456")
@@ -38,13 +38,13 @@ class TestParseBasic(TestCase):
         self.assertEqual(testoutput['access_date'], datetime.datetime.fromisoformat("2002-02-02 02:02:02"))
         self.assertEqual(testoutput['title'], "test title")
 
-    def test_parse_basic_row_blank_input(self):
+    def test_parse_basic_blank_input(self):
         blankinput = {'topiclink': "https://testsite.org/index.php?topic=123456.0", 'creator': None,
                       'creatorlink': None, 'views': None, 'replies': None, 'lastpost': None, 'url': None,
                       'accessed': None, 'title': None
                       }
 
-        blankoutput = parse_basic_row(blankinput)
+        blankoutput = parse_basic(blankinput)
 
         self.assertEqual(blankoutput['creator'], None)
         self.assertEqual(blankoutput['creator_id'], None)
@@ -54,10 +54,10 @@ class TestParseBasic(TestCase):
         self.assertEqual(blankoutput['access_date'], None)
         self.assertEqual(blankoutput['title'], None)
 
-    def test_parse_basic_row_missing_input(self):
+    def test_parse_basic_missing_input(self):
         missinginput = {'topiclink': "https://testsite.org/index.php?topic=123456.0"}
 
-        missingoutput = parse_basic_row(missinginput)
+        missingoutput = parse_basic(missinginput)
 
         self.assertEqual(missingoutput['creator'], None)
         self.assertEqual(missingoutput['creator_id'], None)
