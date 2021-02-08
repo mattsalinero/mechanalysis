@@ -70,7 +70,8 @@ class TestParseBasic(TestCase):
 
 class TestParseTitle(TestCase):
     def test_parse_title_normal(self):
-        parser = Lark.open("../gb_title.lark", start="topic", parser="earley")
+        grammar = Path(__file__).parent.parent / "gb_title.lark"
+        parser = Lark.open(grammar, start="topic", parser="earley")
 
         testnormal = parse_title("[GB] ignore GMK PBT test1 test2 | ignore", parser)
         self.assertEqual(['GMK', 'PBT'], testnormal['info_codes'])
@@ -92,7 +93,8 @@ class TestParseTitle(TestCase):
         self.assertEqual(None, testnotc['thread_type'])
 
     def test_parse_title_edgecase(self):
-        parser = Lark.open("../gb_title.lark", start="topic", parser="earley")
+        grammar = Path(__file__).parent.parent / "gb_title.lark"
+        parser = Lark.open(grammar, start="topic", parser="earley")
 
         testedge = parse_title("literally unparseable", parser)
         self.assertEqual(None, testedge['info_codes'])
@@ -102,3 +104,19 @@ class TestParseTitle(TestCase):
 
         testedge = parse_title("[IC] literally unparseable", parser)
         self.assertEqual("IC", testedge['thread_type'])
+
+
+class TestParseTopic(TestCase):
+    def test_parse_topic_data(self):
+        testinput = [{'topiclink': "https://testsite.org/index.php?topic=111111.0", 'title': "GMK test1"},
+                     {'topiclink': "https://testsite.org/index.php?topic=222222.0", 'title': "PBT test2"},
+                     {'topiclink': "https://testsite.org/index.php?topic=333333.0", 'title': "IFK test3"}
+                     ]
+        testoutput = parse_topic_data(testinput)
+        self.assertEqual(testoutput[0]['topic_id'], "111111")
+        self.assertEqual(testoutput[1]['topic_id'], "222222")
+        self.assertEqual(testoutput[2]['topic_id'], "333333")
+        self.assertEqual(testoutput[0]['set_name'], "test1")
+        self.assertEqual(testoutput[1]['set_name'], "test2")
+        self.assertEqual(testoutput[2]['set_name'], "test3")
+        self.assertEqual(testoutput[0]['creator'], None)
