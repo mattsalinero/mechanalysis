@@ -1,6 +1,7 @@
 import datetime
 import csv
 import regex
+from pathlib import Path
 import emoji
 import pandas as pd
 from lark import Lark
@@ -73,13 +74,16 @@ def parse_topic_data(topics):
     # TODO: fix docstring in general
     # TODO: add tai-hao (and potential variations like SPSA) to list of infocodes
 
-    parser = Lark.open("gb_title.lark", start="topic", parser="earley")
+    grammar = Path(__file__).parent / "gb_title.lark"
+    parser = Lark.open(grammar, start="topic", parser="earley")
 
-    topic_data = []
+    topic_index_data = []
     for topic in topics:
-        topic_data.append(parse_basic_row(topic).update(parse_title(topic, parser)))
+        topic_data = parse_basic_row(topic)
+        topic_data.update(parse_title(topic['title'], parser))
+        topic_index_data.append(topic_data)
 
-    return topic_data
+    return topic_index_data
 
 
 def parse_title(to_search, title_parser):
