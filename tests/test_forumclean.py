@@ -70,17 +70,35 @@ class TestParseBasic(TestCase):
 
 class TestParseTitle(TestCase):
     def test_parse_title_normal(self):
-        parser = Lark.open("gb_title.lark", start="topic", parser="earley")
-        self.fail()
+        parser = Lark.open("../gb_title.lark", start="topic", parser="earley")
 
-    def test_parse_title_inverted(self):
-        self.fail()
+        testnormal = parse_title("[GB] ignore GMK PBT test1 test2 | ignore", parser)
+        self.assertEqual(['GMK', 'PBT'], testnormal['info_codes'])
+        self.assertEqual("test1 test2", testnormal['set_name'])
+        self.assertEqual("GB", testnormal['thread_type'])
+        self.assertEqual("keycaps", testnormal['product_type'])
 
-    def test_parse_title_mapping(self):
-        self.fail()
+        testinv = parse_title("test1 test2 GMK PBT test1 test2", parser)
+        self.assertEqual(['GMK', 'PBT'], testinv['info_codes'])
+        self.assertEqual("test1 test2", testinv['set_name'])
 
-    def test_parse_title_threadcode(self):
-        self.fail()
+        testmapped = parse_title("ePBT EnjoyPBT test1 test2", parser)
+        self.assertEqual(['EPBT', 'EPBT'], testmapped['info_codes'])
 
-    def test_parse_title_unknown(self):
-        self.fail()
+        testtc = parse_title("(GB) ignore GMK PBT test1 test2 | ignore", parser)
+        self.assertEqual("GB", testtc['thread_type'])
+
+        testnotc = parse_title("GMK test1 test2", parser)
+        self.assertEqual(None, testnotc['thread_type'])
+
+    def test_parse_title_edgecase(self):
+        parser = Lark.open("../gb_title.lark", start="topic", parser="earley")
+
+        testedge = parse_title("literally unparseable", parser)
+        self.assertEqual(None, testedge['info_codes'])
+        self.assertEqual(None, testedge['set_name'])
+        self.assertEqual(None, testedge['thread_type'])
+        self.assertEqual(None, testedge['product_type'])
+
+        testedge = parse_title("[IC] literally unparseable", parser)
+        self.assertEqual("IC", testedge['thread_type'])

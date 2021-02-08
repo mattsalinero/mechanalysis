@@ -72,6 +72,7 @@ def parse_title(to_search, title_parser):
     :return: tuple(str thread type, str infocode, str set name)
     """
     # TODO: fix docstring for output
+    # TODO: add handler for empty string input
 
     title_tree = title_parser.parse(emoji.demojize(to_search)).children[0]
     # TODO: Move the actual parsing call into the calling function, call this traverse_parsed_title or something

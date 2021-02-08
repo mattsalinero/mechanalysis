@@ -10,7 +10,7 @@ invtitlesection: namesection icodes
 endsection.2: (_SEPARATOR | notname) (_SEPARATOR | notname | _ANYBLOCK)*
 
 icodes.3: icode+
-icode: /GMK/i -> gmk
+icode.3: /GMK/i -> gmk
      | /PBT/i -> pbt
      | (/ePBT/i | /EnjoyPBT/i) -> epbt
      | (/IFK/i | /Infinikey/i) -> ifk
