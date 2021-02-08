@@ -105,6 +105,9 @@ class TestParseTitle(TestCase):
         testedge = parse_title("[IC] literally unparseable", parser)
         self.assertEqual("IC", testedge['thread_type'])
 
+        with self.assertRaises(ValueError):
+            parse_title("", parser)
+
 
 class TestParseTopic(TestCase):
     def test_parse_topic_data(self):

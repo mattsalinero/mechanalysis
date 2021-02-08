@@ -86,34 +86,33 @@ def parse_topic_data(topics):
     return topic_index_data
 
 
-def parse_title(to_search, title_parser):
+def parse_title(input_title, title_parser):
     """
-    Finds thread type indicator, keyset infocodes, and keyset name from thread title
-    :param to_search: str to parse as a title
-    :param title_parser:
-    :return: tuple(str thread type, str infocode, str set name)
+    Parses topic title to determine product type (keycap or unknown), thread_type (group buy, interest check),
+    info codes (GMK, SA, etc.), and the name of the set (if applicable)
+    :param input_title: str title to parse
+    :param title_parser: LARK parser used to interpret title
+    :return: dict containing product_type, thread_type, info_codes, set_name (all default to None)
     """
-    # TODO: fix docstring for output
-    # TODO: add handler for empty string input
 
-    title_tree = title_parser.parse(emoji.demojize(to_search)).children[0]
-    # TODO: Move the actual parsing call into the calling function, call this traverse_parsed_title or something
+    if not input_title:
+        raise ValueError("invalid/empty input title")
+
+    # parse input_title (replacing emojis with unicode string)
+    title_tree = title_parser.parse(emoji.demojize(input_title)).children[0]
 
     title_data = {'product_type': None, 'thread_type': None, 'info_codes': None, 'set_name': None}
 
+    # extract relevant data from parse tree
     if title_tree.data == 'keycapthread':
         title_data['product_type'] = "keycaps"
-
     for subtree in title_tree.children:
         if subtree.data == 'threadcode':
             title_data['thread_type'] = subtree.children[0].value.upper()
         elif subtree.data == 'titlesection' or subtree.data == 'invtitlesection':
             for section in subtree.children:
                 if section.data == 'icodes':
-                    infocodes = []
-                    for icode in section.children:
-                        infocodes.append(icode.data.upper())
-                    title_data['info_codes'] = infocodes
+                    title_data['info_codes'] = [icode.data.upper() for icode in section.children]
                 else:
                     title_data['set_name'] = " ".join([namepart for namepart in section.children])
 
