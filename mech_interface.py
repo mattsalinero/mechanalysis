@@ -1,5 +1,5 @@
-from ghscrape import *
-from forumclean import *
+from mech_scrape import *
+from mech_clean import *
 import datetime
 
 

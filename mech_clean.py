@@ -41,7 +41,7 @@ def clean_board_data(in_data=None, in_filepath=None, out_filepath=None):
         fields = ['topic_id', 'product_type', 'thread_type', 'info_codes', 'set_name', 'creator', 'creator_id', 'views',
                   'replies', 'board', 'access_date', 'title']
         with open(out_filepath, 'w', encoding="utf-8", newline='') as out_csv:
-            # TODO: implement a check if this file exists already, maybe a parameter to control
+            # TODO: implement a check if this file exists already, maybe a parameter to control if it overwrites
             out_writer = csv.DictWriter(out_csv, fieldnames=fields)
             out_writer.writeheader()
             out_writer.writerows(out_data)
@@ -58,7 +58,7 @@ def parse_board_data(input_topics):
     :return: list[dict] containing extracted data for each topic
     """
     # set up parser using grammar file
-    grammar = Path(__file__).parent / "gb_title.lark"
+    grammar = Path(__file__).parent / "title_gram.lark"
     parser = Lark.open(grammar, start="topic", parser="earley")
 
     # extract and aggregate relevant data

@@ -1,6 +1,6 @@
 import datetime
 import os
-from forumclean import *
+from mech_clean import *
 from unittest import TestCase
 
 
@@ -71,7 +71,7 @@ class TestParseBasic(TestCase):
 
 class TestParseTitle(TestCase):
     def test_parse_title_normal(self):
-        grammar = Path(__file__).parent.parent / "gb_title.lark"
+        grammar = Path(__file__).parent.parent / "title_gram.lark"
         parser = Lark.open(grammar, start="topic", parser="earley")
 
         testnormal = parse_title("[GB] ignore GMK PBT test1 test2 | ignore", parser)
@@ -94,7 +94,7 @@ class TestParseTitle(TestCase):
         self.assertEqual(None, testnotc['thread_type'])
 
     def test_parse_title_edgecase(self):
-        grammar = Path(__file__).parent.parent / "gb_title.lark"
+        grammar = Path(__file__).parent.parent / "title_gram.lark"
         parser = Lark.open(grammar, start="topic", parser="earley")
 
         testedge = parse_title("literally unparseable", parser)

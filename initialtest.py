@@ -1,5 +1,5 @@
-from ghscrape import *
-from forumclean import *
+from mech_scrape import *
+from mech_clean import *
 
 # scraped_data = scrape_board("https://geekhack.org/index.php?board=70.", limit_pages=3,
 #                             request_interval=10, filepath='test.csv')
