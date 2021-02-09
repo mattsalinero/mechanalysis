@@ -18,16 +18,14 @@ def clean_board_data(in_data=None, in_filepath=None, out_filepath=None):
     """
     # TODO: make another function to deal with DataFrame input (clean_board_dataframe()?), leave this one for list[dict]
     #  can also have clean_board_database() eventually
-    # TODO: implement unit tests for clean_board_data()
-
     if in_data:
         if type(in_data) is list and type(in_data[0]) is dict:
             raw_data = in_data
         else:
             raise ValueError("improperly formatted input data")
     elif in_filepath:
-        with open(in_filepath, 'r', encoding="utf-8", newline='') as in_reader:
-            in_reader = csv.DictReader(in_reader)
+        with open(in_filepath, 'r', encoding="utf-8", newline='') as in_csv:
+            in_reader = csv.DictReader(in_csv)
             raw_data = [csv_topic for csv_topic in in_reader]
     else:
         raise ValueError("no valid input provided")
@@ -39,10 +37,11 @@ def clean_board_data(in_data=None, in_filepath=None, out_filepath=None):
     print(f"Parsed {len(out_data)} records")
 
     if out_filepath:
-        # save data to csv - note this does not include an index field
+        # save data to csv - note this does not include an index field other than topic id
         fields = ['topic_id', 'product_type', 'thread_type', 'info_codes', 'set_name', 'creator', 'creator_id', 'views',
                   'replies', 'board', 'access_date', 'title']
-        with open(in_filepath, 'w', encoding="utf-8", newline='') as out_csv:
+        with open(out_filepath, 'w', encoding="utf-8", newline='') as out_csv:
+            # TODO: implement a check if this file exists already, maybe a parameter to control
             out_writer = csv.DictWriter(out_csv, fieldnames=fields)
             out_writer.writeheader()
             out_writer.writerows(out_data)

@@ -1,4 +1,5 @@
 import datetime
+import os
 from forumclean import *
 from unittest import TestCase
 
@@ -123,3 +124,18 @@ class TestParseBoard(TestCase):
         self.assertEqual(testoutput[1]['set_name'], "test2")
         self.assertEqual(testoutput[2]['set_name'], "test3")
         self.assertEqual(testoutput[0]['creator'], None)
+
+
+class TestCleanBoard(TestCase):
+    def test_clean_board_data(self):
+        test_in_file = "fixtures/test_raw_data.csv"
+        test_out_file = "fixtures/test_out"
+        clean_board_data(in_filepath=test_in_file, out_filepath=test_out_file)
+
+        with open(test_out_file, 'r', encoding="utf-8", newline='') as result_csv:
+            result_reader = csv.DictReader(result_csv)
+            result_data = [csv_topic for csv_topic in result_reader]
+
+        self.assertEqual(10, len(result_data))
+        self.assertEqual("110592", result_data[0]['topic_id'])
+        os.remove(test_out_file)

@@ -17,12 +17,12 @@ from forumclean import *
 
 # testdata = clean_board_data(scraped_data, filepath="data/210108test.csv")
 
-print(parse_board_data(["[GB] GMK Red & Blue Samurai (GB Closed)"]))
-print(parse_board_data(["[GB] GMK Lunar 🚀 — All Kits Will Be Made; Final Numbers Posted"]))
-print(parse_board_data(["[GB]Enjoypbt KON MOMO (7.10~7.30)"]))
+# print(parse_board_data(["[GB] GMK Red & Blue Samurai (GB Closed)"]))
+# print(parse_board_data(["[GB] GMK Lunar 🚀 — All Kits Will Be Made; Final Numbers Posted"]))
+# print(parse_board_data(["[GB]Enjoypbt KON MOMO (7.10~7.30)"]))
 
 # clean_board_data(in_filepath="data/210121gb_raw.csv", out_filepath="data/210121gb_clean.csv")
-# clean_board_data(in_filepath="data/210121ic_raw.csv", out_filepath="data/210121ic_clean.csv")
+clean_board_data(in_filepath="data/210121ic_raw.csv", out_filepath="data/210121ic_clean_test.csv")
 
 # test_topics = [110511, 110355]
 # # test_topics = [110530, 110511, 110455, 110355, 109403, 109307, 109140, 109000, 108983, 108949]
