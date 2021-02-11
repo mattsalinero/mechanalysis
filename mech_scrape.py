@@ -4,6 +4,7 @@ import datetime
 import csv
 import json
 import random
+from pathlib import Path
 import bs4
 from bs4 import BeautifulSoup
 
@@ -38,10 +39,7 @@ def scrape_board(forum_url, board, limit_pages=10, limit_date=None, request_inte
     for x in range(limit_pages):
         current_url = base_url + str(x * expected_topics) + sort_url
 
-        # use a test local file to check that the format parsing works
-        # print("fake scrape: " + current_url)
-        # with open("gbnp.html") as test_board:
-        #     soup = BeautifulSoup(test_board, 'html5lib')
+
 
         # access current url for page to scrape
         print("requesting: " + current_url)
@@ -51,7 +49,7 @@ def scrape_board(forum_url, board, limit_pages=10, limit_date=None, request_inte
         current_data = scrape_page(soup, current_url)
 
         if x > 0:
-            if current_data[-1]['topiclink'] == scraped_board[-1]['topiclink']:
+            if current_data[-1]['topic_link'] == scraped_board[-1]['topic_link']:
                 # break if duplicate page received
                 print("End of board reached")
                 break
@@ -65,7 +63,7 @@ def scrape_board(forum_url, board, limit_pages=10, limit_date=None, request_inte
             break
 
         if limit_date:
-            if current_data[-1]['lastpost'].date() < limit_date:
+            if current_data[-1]['last_post'].date() < limit_date:
                 # break if date limit reached
                 print("Date limit reached")
                 break
@@ -77,7 +75,8 @@ def scrape_board(forum_url, board, limit_pages=10, limit_date=None, request_inte
     # save to file if appropriate
     if filepath:
         with open(filepath, 'w', encoding="utf-8", newline='') as csvfile:
-            fields = ['title', 'topiclink', 'creator', 'creatorlink', 'replies', 'views', 'lastpost', 'url', 'accessed']
+            fields = ['title', 'topic_link', 'creator', 'creator_link', 'replies', 'views', 'last_post', 'url',
+                      'accessed']
             csvwriter = csv.DictWriter(csvfile, fieldnames=fields)
 
             csvwriter.writeheader()
@@ -89,7 +88,7 @@ def scrape_board(forum_url, board, limit_pages=10, limit_date=None, request_inte
 
 def scrape_page(page_soup, page_url='unknown'):
     """
-    Internal function to extract topic data out of a single page of results
+    Internal function to extract topic data out of a single page of a board index
     :param page_soup:
     :param page_url:
     :return:
@@ -99,23 +98,21 @@ def scrape_page(page_soup, page_url='unknown'):
     for topic in topics.find_all('td', class_=["subject windowbg2", "subject lockedbg2"]):
         scrape = {}
         scrape['title'] = topic.span.a.string
-        scrape['topiclink'] = topic.span.a['href']
-        if topic.p.a:
+        scrape['topic_link'] = topic.span.a['href']
+        if topic.p.find('a', recursive=False):
             scrape['creator'] = topic.p.a.string
-            scrape['creatorlink'] = topic.p.a['href']
+            scrape['creator_link'] = topic.p.a['href']
         else:
-            scrape['creator'] = 'banned user'
-            scrape['creatorlink'] = None
+            scrape['creator'] = "banned user"
+            scrape['creator_link'] = None
 
         stats_block = topic.parent.find('td', class_=["stats windowbg", "stats lockedbg"]).stripped_strings
         scrape['replies'] = next(stats_block)
         scrape['views'] = next(stats_block)
-        # print(scrape['replies'] + ' ' + scrape['views'])
 
         lastpost = topic.parent.find('td', class_=["lastpost windowbg2", "lastpost lockedbg2"]).stripped_strings
         # TODO: change this to last_post in data structure? (and just generally use snake_case for this)
-        scrape['lastpost'] = datetime.datetime.strptime(next(lastpost), "%a, %d %B %Y, %H:%M:%S")
-        # print(scrape['lastpost'])
+        scrape['last_post'] = datetime.datetime.strptime(next(lastpost), "%a, %d %B %Y, %H:%M:%S")
 
         scrape['url'] = page_url
         scrape['accessed'] = datetime.datetime.now().replace(microsecond=0)
