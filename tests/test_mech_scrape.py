@@ -1,4 +1,5 @@
 from mech_scrape import *
+from mech_scrape import _board_topic_count
 from unittest import TestCase
 
 
@@ -30,4 +31,7 @@ class TestScrapePage(TestCase):
 
 class TestTopicCount(TestCase):
     def test_board_topic_count(self):
-        self.fail()
+        test_filepath = Path(__file__).parent / "fixtures" / "test_board_index.html"
+        with open(test_filepath) as test_board:
+            soup = BeautifulSoup(test_board, 'html5lib')
+        self.assertEqual(15, _board_topic_count(soup))

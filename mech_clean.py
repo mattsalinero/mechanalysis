@@ -115,16 +115,16 @@ def parse_basic(input_topic):
                   'access_date': None, 'title': None}
 
     # parse for topic id
-    if 'topiclink' in input_topic and input_topic['topiclink']:
-        basic_data['topic_id'] = input_topic['topiclink'].split('=')[-1].split('.')[0]
+    if 'topic_link' in input_topic and input_topic['topic_link']:
+        basic_data['topic_id'] = input_topic['topic_link'].split('=')[-1].split('.')[0]
     else:
         raise ValueError("missing required topic id")
 
     # parse for creator info
     if 'creator' in input_topic and input_topic['creator']:
         basic_data['creator'] = input_topic['creator']
-    if 'creatorlink' in input_topic and input_topic['creatorlink']:
-        basic_data['creator_id'] = input_topic['creatorlink'].split('=')[-1]
+    if 'creator_link' in input_topic and input_topic['creator_link']:
+        basic_data['creator_id'] = input_topic['creator_link'].split('=')[-1]
 
     # parse for topic stats
     if 'views' in input_topic and input_topic['views']:

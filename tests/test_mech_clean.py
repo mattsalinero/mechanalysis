@@ -6,12 +6,12 @@ from unittest import TestCase
 
 class TestParseBasic(TestCase):
     def test_parse_basic_topic_id(self):
-        testinput = {'topiclink': "https://testsite.org/index.php?topic=123456.0"}
+        testinput = {'topic_link': "https://testsite.org/index.php?topic=123456.0"}
         self.assertEqual(parse_basic(testinput)['topic_id'], "123456")
 
     def test_parse_basic_bad_topic_id(self):
-        blankinput = {'topiclink': None, 'creator': None, 'creatorlink': None, 'views': None, 'replies': None,
-                      'lastpost': None, 'url': None, 'accessed': None, 'title': None}
+        blankinput = {'topic_link': None, 'creator': None, 'creator_link': None, 'views': None, 'replies': None,
+                      'last_post': None, 'url': None, 'accessed': None, 'title': None}
         with self.assertRaises(ValueError):
             parse_basic(blankinput)
         with self.assertRaises(ValueError):
@@ -19,12 +19,12 @@ class TestParseBasic(TestCase):
 
     def test_parse_basic_proper_input(self):
         testinput = {'title': "test title",
-                     'topiclink': "https://testsite.org/index.php?topic=123456.0",
+                     'topic_link': "https://testsite.org/index.php?topic=123456.0",
                      'creator': "test creator",
-                     'creatorlink': "https://testsite.org/index.php?action=profile;u=123456",
+                     'creator_link': "https://testsite.org/index.php?action=profile;u=123456",
                      'replies': "123 Replies",
                      'views': "456 Views",
-                     'lastpost': datetime.datetime.fromisoformat("2001-01-01 01:01:01"),
+                     'last_post': datetime.datetime.fromisoformat("2001-01-01 01:01:01"),
                      'url': "https://geekhack.org/index.php?board=70.0;sort=first_post;desc",
                      'accessed': datetime.datetime.fromisoformat("2002-02-02 02:02:02")
                      }
@@ -40,8 +40,8 @@ class TestParseBasic(TestCase):
         self.assertEqual(testoutput['title'], "test title")
 
     def test_parse_basic_blank_input(self):
-        blankinput = {'topiclink': "https://testsite.org/index.php?topic=123456.0", 'creator': None,
-                      'creatorlink': None, 'views': None, 'replies': None, 'lastpost': None, 'url': None,
+        blankinput = {'topic_link': "https://testsite.org/index.php?topic=123456.0", 'creator': None,
+                      'creator_link': None, 'views': None, 'replies': None, 'lastpost': None, 'url': None,
                       'accessed': None, 'title': None
                       }
 
@@ -56,7 +56,7 @@ class TestParseBasic(TestCase):
         self.assertEqual(blankoutput['title'], None)
 
     def test_parse_basic_missing_input(self):
-        missinginput = {'topiclink': "https://testsite.org/index.php?topic=123456.0"}
+        missinginput = {'topic_link': "https://testsite.org/index.php?topic=123456.0"}
 
         missingoutput = parse_basic(missinginput)
 
@@ -112,9 +112,9 @@ class TestParseTitle(TestCase):
 
 class TestParseBoard(TestCase):
     def test_parse_board_data(self):
-        testinput = [{'topiclink': "https://testsite.org/index.php?topic=111111.0", 'title': "GMK test1"},
-                     {'topiclink': "https://testsite.org/index.php?topic=222222.0", 'title': "PBT test2"},
-                     {'topiclink': "https://testsite.org/index.php?topic=333333.0", 'title': "IFK test3"}
+        testinput = [{'topic_link': "https://testsite.org/index.php?topic=111111.0", 'title': "GMK test1"},
+                     {'topic_link': "https://testsite.org/index.php?topic=222222.0", 'title': "PBT test2"},
+                     {'topic_link': "https://testsite.org/index.php?topic=333333.0", 'title': "IFK test3"}
                      ]
         testoutput = parse_board_data(testinput)
         self.assertEqual(testoutput[0]['topic_id'], "111111")

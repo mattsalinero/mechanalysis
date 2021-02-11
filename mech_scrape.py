@@ -39,8 +39,6 @@ def scrape_board(forum_url, board, limit_pages=10, limit_date=None, request_inte
     for x in range(limit_pages):
         current_url = base_url + str(x * expected_topics) + sort_url
 
-
-
         # access current url for page to scrape
         print("requesting: " + current_url)
         current_page = session.get(current_url, timeout=5)
@@ -111,7 +109,6 @@ def scrape_page(page_soup, page_url='unknown'):
         scrape['views'] = next(stats_block)
 
         lastpost = topic.parent.find('td', class_=["lastpost windowbg2", "lastpost lockedbg2"]).stripped_strings
-        # TODO: change this to last_post in data structure? (and just generally use snake_case for this)
         scrape['last_post'] = datetime.datetime.strptime(next(lastpost), "%a, %d %B %Y, %H:%M:%S")
 
         scrape['url'] = page_url
