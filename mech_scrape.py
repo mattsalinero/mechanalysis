@@ -216,7 +216,6 @@ def scrape_topic(topic_soup, topic_id='unknown'):
     first_post = posts[0]
 
     # find data specific to first post (topic created date, full lists of links, images)
-    # TODO: make this own function?
     date_created = first_post.find('div', class_="keyinfo").find('div', class_="smalltext").stripped_strings
     scraped_topic['topic_created'] = datetime.datetime.strptime((' '.join([text for text in date_created])),
                                                                 "« on: %a, %d %B %Y, %H:%M:%S »")
@@ -228,45 +227,11 @@ def scrape_topic(topic_soup, topic_id='unknown'):
     print(f"  topic created: {scraped_topic['topic_created']}")
     print(f"  topic contains: {len(scraped_topic['fp_links'])} links")
     print(f"  topic contains: {len(scraped_topic['fp_images'])} images")
-    # [print(link) for link in scraped_topic['fp_images']]
 
     # find data for each post on first page (poster, time, text)
     scraped_posts = []
     for post in posts:
-        # TODO: make this own function?
-        scraped_post = {}
-
-        post_date = post.find('div', class_="keyinfo").find('div', class_="smalltext").stripped_strings
-        scraped_post['post_date'] = datetime.datetime.strptime([post for post in post_date][-1],
-                                                               "%a, %d %B %Y, %H:%M:%S »")
-        post_er = post.find('div', class_="poster").h4
-        if post_er.a.get('href'):
-            scraped_post['poster_id'] = post_er.a.get('href').split('=')[-1]
-        else:
-            scraped_post['poster_id'] = None
-
-        # grabs post content for selected post (recursively)
-        def quoteless_content(source):
-            content = []
-            for child in source.children:
-                if isinstance(child, bs4.element.NavigableString):
-                    string_content = str(child).strip()
-                    if string_content:
-                        content.append(string_content)
-                    continue
-                elif child.name == "blockquote":
-                    content.append("[quoted text]")
-                    continue
-                else:
-                    child_content = quoteless_content(child)
-                    if child_content:
-                        content.extend(child_content)
-            return content
-
-        # scraped_post['post_content'] = post.find('div', class_="post").get_text(" ", strip=True)
-        scraped_post['post_content'] = "\n".join(quoteless_content(post.find('div', class_="post")))[:2000]
-
-        scraped_posts.append(scraped_post)
+        scraped_posts.append(scrape_post(post))
 
     scraped_topic['post_data'] = scraped_posts
 
@@ -275,3 +240,38 @@ def scrape_topic(topic_soup, topic_id='unknown'):
     scraped_topic['accessed'] = datetime.datetime.now().replace(microsecond=0)
 
     return scraped_topic
+
+
+def scrape_post(post):
+    scraped_post = {}
+
+    post_date = post.find('div', class_="keyinfo").find('div', class_="smalltext").stripped_strings
+    scraped_post['post_date'] = datetime.datetime.strptime([date for date in post_date][-1],
+                                                           "%a, %d %B %Y, %H:%M:%S »")
+    post_er = post.find('div', class_="poster").h4
+    if post_er.a.get('href'):
+        scraped_post['poster_id'] = post_er.a.get('href').split('=')[-1]
+    else:
+        scraped_post['poster_id'] = None
+
+    # grabs post content for selected post (recursively)
+    def quoteless_content(source):
+        content = []
+        for child in source.children:
+            if isinstance(child, bs4.element.NavigableString):
+                string_content = str(child).strip()
+                if string_content:
+                    content.append(string_content)
+                continue
+            elif child.name == "blockquote":
+                content.append("[quoted text]")
+                continue
+            else:
+                child_content = quoteless_content(child)
+                if child_content:
+                    content.extend(child_content)
+        return content
+
+    scraped_post['post_content'] = "\n".join(quoteless_content(post.find('div', class_="post")))[:2000]
+
+    return scraped_post
