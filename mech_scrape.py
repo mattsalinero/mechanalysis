@@ -8,13 +8,15 @@ import bs4
 from bs4 import BeautifulSoup
 
 
-def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10, filepath=None, sort='firstpost'):
+def scrape_board(forum_url, board, limit_pages=10, limit_date=None, request_interval=10, filepath=None,
+                 sort='firstpost'):
     """
     Function to scrape topic data from a specified forum board (formatted like GeekHack). Will return the scraped data
     and save to a file the filepath parameter is set.
 
-    :param board_url: string of url in the format "https://geekhack.org/index.php?board=70."
+    :param forum_url: string of url in the format "https://geekhack.org/index.php?board=70."
                     - function will append integers to the end to get subsequent pages
+    :param board:
     :param limit_pages: int max pages of board to scrape
     :param limit_date: date object of date to scrape to (may overrun by 1 page)
     :param request_interval: int how long on average to wait between requests (randomized)
@@ -24,19 +26,17 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
     """
     # TODO: implement restriction on input values for sort variable
     # TODO: replace board url with base url (see scrape_topics())
+    base_url = "https://" + forum_url + "/index.php?board=" + board + "."
     sorts = {'firstpost': ";sort=first_post;desc", 'lastpost': ";sort=last_post;desc", 'default': ""}
     sort_url = sorts[sort]
-    # base_url = "https://" + forum_url + "/index.php?board=" board + "."
 
-    scraped_board = []
-    topic_per = None
-    current_url = board_url + str(0) + sort_url
     session = requests.Session()
-    session.get(board_url, timeout=5)
+
+    first_page = session.get(base_url, timeout=5)
+    expected_topics = _board_topic_count(BeautifulSoup(first_page.content, 'html5lib'))
+    scraped_board = []
     for x in range(limit_pages):
-        # TODO: make topic_per into own function using above session call outside loop to pull metadata/ranges
-        if topic_per:
-            current_url = board_url + str(x * topic_per) + sort_url
+        current_url = base_url + str(x * expected_topics) + sort_url
 
         # use a test local file to check that the format parsing works
         # print("fake scrape: " + current_url)
@@ -50,7 +50,7 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
 
         current_data = scrape_page(soup, current_url)
 
-        if scraped_board:
+        if x > 0:
             if current_data[-1]['topiclink'] == scraped_board[-1]['topiclink']:
                 # break if duplicate page received
                 print("End of board reached")
@@ -58,15 +58,12 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
 
         scraped_board.extend(current_data)
 
-        topic_count = len(soup.find('div', class_="tborder topic_table").tbody
-                          .find_all('tr', class_=None))
-        if topic_per:
-            if topic_count < topic_per:
-                # break if latest page has fewer topics than the others (i.e. it's the last page)
-                print("End of board reached")
-                break
-        else:
-            topic_per = topic_count
+        topic_count = _board_topic_count(soup)
+        if topic_count < expected_topics:
+            # break if latest page has fewer topics than the others (i.e. it's the last page)
+            print("End of board reached")
+            break
+
         if limit_date:
             if current_data[-1]['lastpost'].date() < limit_date:
                 # break if date limit reached
@@ -75,7 +72,7 @@ def scrape_board(board_url, limit_pages=10, limit_date=None, request_interval=10
 
         # wait to keep request rate low
         if x != (limit_pages - 1):
-            time.sleep(random.randint(request_interval//2, request_interval*2))
+            time.sleep(random.randint(request_interval // 2, request_interval * 2))
 
     # save to file if appropriate
     if filepath:
@@ -116,7 +113,7 @@ def scrape_page(page_soup, page_url='unknown'):
         # print(scrape['replies'] + ' ' + scrape['views'])
 
         lastpost = topic.parent.find('td', class_=["lastpost windowbg2", "lastpost lockedbg2"]).stripped_strings
-        # TODO: change this to last_post in data structure?
+        # TODO: change this to last_post in data structure? (and just generally use snake_case for this)
         scrape['lastpost'] = datetime.datetime.strptime(next(lastpost), "%a, %d %B %Y, %H:%M:%S")
         # print(scrape['lastpost'])
 
@@ -128,9 +125,14 @@ def scrape_page(page_soup, page_url='unknown'):
     return scraped_page
 
 
+def _board_topic_count(soup):
+    topic_count = len(soup.find('div', class_="tborder topic_table").tbody
+                      .find_all('tr', class_=None))
+    return topic_count
+
+
 def scrape_topics(forum_url, topic_ids, limit_topics=None, offset=0, limit_date=None, request_interval=10,
                   filepath=None, postdir=None):
-
     if limit_topics and len(topic_ids) > limit_topics:
         if offset > len(topic_ids):
             print(f"offset of {offset} larger than {len(topic_ids)} provided topics")
@@ -178,12 +180,14 @@ def scrape_topics(forum_url, topic_ids, limit_topics=None, offset=0, limit_date=
         topic_data.append(current_data_short)
 
         if postdir:
+            # TODO: implement default postdir using pathlib
             json_filepath = postdir + "/topic" + topic_id + "_postdata.json"
             json_data = json.dumps(current_data, indent=4, default=(lambda x: x.__str__()))
             with open(json_filepath, 'w') as pdfile:
                 pdfile.write(json_data)
 
         if filepath:
+            # TODO: implement default filepath using pathlib
             with open(filepath, 'a', encoding="utf-8", newline='') as csvfile:
                 fields = ['topic_id', 'topic_created', 'accessed']
                 csvwriter = csv.DictWriter(csvfile, fieldnames=fields)
@@ -198,7 +202,7 @@ def scrape_topics(forum_url, topic_ids, limit_topics=None, offset=0, limit_date=
 
         # wait to keep request rate low
         if topic_id != topic_ids[-1]:
-            time.sleep(random.randint(request_interval//2, request_interval*2))
+            time.sleep(random.randint(request_interval // 2, request_interval * 2))
 
     print(f"Scraping complete: {len(topic_data)} topics scraped")
     return topic_data
@@ -218,6 +222,7 @@ def scrape_topic(topic_soup, topic_id='unknown'):
     first_post = posts[0]
 
     # find data specific to first post (topic created date, full lists of links, images)
+    # TODO: make this own function?
     date_created = first_post.find('div', class_="keyinfo").find('div', class_="smalltext").stripped_strings
     scraped_topic['topic_created'] = datetime.datetime.strptime((' '.join([text for text in date_created])),
                                                                 "« on: %a, %d %B %Y, %H:%M:%S »")
@@ -234,6 +239,7 @@ def scrape_topic(topic_soup, topic_id='unknown'):
     # find data for each post on first page (poster, time, text)
     scraped_posts = []
     for post in posts:
+        # TODO: make this own function?
         scraped_post = {}
 
         post_date = post.find('div', class_="keyinfo").find('div', class_="smalltext").stripped_strings

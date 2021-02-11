@@ -42,6 +42,8 @@ def clean_board_data(in_data=None, in_filepath=None, out_filepath=None):
                   'replies', 'board', 'access_date', 'title']
         with open(out_filepath, 'w', encoding="utf-8", newline='') as out_csv:
             # TODO: implement a check if this file exists already, maybe a parameter to control if it overwrites
+            # TODO: split all the file read/writes into own functions in a mech_utils.py file (for better testing,
+            #  less repetition) - parameters would be filepath, fields (where it makes sense), and open mode for write
             out_writer = csv.DictWriter(out_csv, fieldnames=fields)
             out_writer.writeheader()
             out_writer.writerows(out_data)
