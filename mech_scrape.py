@@ -91,6 +91,7 @@ def scrape_page(page_soup, page_url='unknown'):
     :param page_url:
     :return:
     """
+    # TODO: rename this to scrape_entry() or something
     scraped_page = []
     topics = page_soup.find('div', class_="tborder topic_table").table.tbody
     for topic in topics.find_all('td', class_=["subject windowbg2", "subject lockedbg2"]):

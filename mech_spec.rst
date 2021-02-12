@@ -63,7 +63,65 @@ Analysis of components other than keycaps (ex. switches, keyboard chassis).
 
 Initial data acquisition will be performed via web scraping of GeekHack. As the project is focused on the effects/outcomes of activities on these community forums, acquiring the available data straight from this source provides the best chance of capturing relevant information. The webscraper will be implemented using Beautifulsoup4 and Requests and save scraped data to a .csv for later analysis.
 
-The webscraper will first take in topic titles from the Group Buy and Interest Check forums. Then, initial data processing will be performed on the scraped topics to identify relevant topics. Only these topics will be individually accessed for topic (as this has to happen on a per-post basis and generates many requests).
+The webscraper will first take in topic titles from the Group Buy and Interest Check forums. Then, initial data processing will be performed on the scraped topics to identify relevant topics. Only these topics will be individually accessed for scraping data from the topic page (as this has to happen on a per-post basis and generates many requests).
+
+*DATA STORAGE*
+
+Data storage will be accomplished using two systems
+
+SQLite Schema
+
+	board_raw
+		id INTEGER PRIMARY KEY
+		title VARCHAR
+		topic_link VARCHAR
+		creator VARCHAR
+		creator_link VARCHAR
+		replies VARCHAR
+		views VARCHAR
+		last_post VARCHAR
+		page_url VARCHAR
+		board INTEGER
+		accessed VARCHAR -> datetime
+
+	page_raw
+		topic_id INTEGER PRIMARY KEY -> topic_id now a number
+		topic_created VARCHAR -> datetime
+		topic_accessed VARCHAR -> datetime
+
+	page_link
+		id INTEGER PRIMARY KEY
+		topic_id INTEGER NOT NULL
+		link VARCHAR NOT NULL
+
+	page_image
+		id INTEGER PRIMARY KEY
+		topic_id INTEGER NOT NULL
+		image_link VARCHAR NOT NULL
+
+	??post_raw??
+
+	topic_data
+		topic_id INTEGER PRIMARY KEY
+		product_type VARCHAR
+		thread_type VARCHAR
+		set_name VARCHAR
+		creator VARCHAR
+		creator_id INTEGER
+		views INTEGER
+		replies INTEGER
+		topic_created VARCHAR -> datetime
+		board INTEGER
+		board_accessed VARCHAR -> datetime
+		topic_accessed VARCHAR -> datetime
+		title VARCHAR
+
+	topic_icode
+		id INTEGER PRIMARY KEY
+		topic_id INTEGER NOT NULL
+		info_code VARCHAR NOT NULL
+
+File based system
 
 *DATA PROCESSING*
 
