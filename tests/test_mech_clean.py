@@ -128,8 +128,8 @@ class TestParseBoard(TestCase):
 
 class TestCleanBoard(TestCase):
     def test_clean_board_data(self):
-        test_in_file = "fixtures/test_raw_data.csv"
-        test_out_file = "fixtures/test_out"
+        test_in_file = Path(__file__).parent / "fixtures" / "test_raw_data.csv"
+        test_out_file = Path(__file__).parent / "fixtures" / "test_out.csv"
         clean_board_data(in_filepath=test_in_file, out_filepath=test_out_file)
 
         with open(test_out_file, 'r', encoding="utf-8", newline='') as result_csv:

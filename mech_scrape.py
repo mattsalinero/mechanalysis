@@ -5,6 +5,7 @@ import csv
 import json
 import random
 from pathlib import Path
+import mech_io
 import bs4
 from bs4 import BeautifulSoup
 
@@ -26,7 +27,6 @@ def scrape_board(forum_url, board, limit_pages=10, limit_date=None, request_inte
     :return: list of dicts containing scraped data
     """
     # TODO: implement restriction on input values for sort variable
-    # TODO: replace board url with base url (see scrape_topics())
     base_url = "https://" + forum_url + "/index.php?board=" + board + "."
     sorts = {'firstpost': ";sort=first_post;desc", 'lastpost': ";sort=last_post;desc", 'default': ""}
     sort_url = sorts[sort]
@@ -72,13 +72,8 @@ def scrape_board(forum_url, board, limit_pages=10, limit_date=None, request_inte
 
     # save to file if appropriate
     if filepath:
-        with open(filepath, 'w', encoding="utf-8", newline='') as csvfile:
-            fields = ['title', 'topic_link', 'creator', 'creator_link', 'replies', 'views', 'last_post', 'url',
-                      'accessed']
-            csvwriter = csv.DictWriter(csvfile, fieldnames=fields)
-
-            csvwriter.writeheader()
-            csvwriter.writerows(scraped_board)
+        fields = ['title', 'topic_link', 'creator', 'creator_link', 'replies', 'views', 'last_post', 'url', 'accessed']
+        mech_io.write_csv(scraped_board, filepath, fields)
 
     print(f"Scraping complete: {len(scraped_board)} topics found")
     return scraped_board
@@ -140,16 +135,7 @@ def scrape_topics(forum_url, topic_ids, limit_topics=None, offset=0, limit_date=
 
     fields = ['topic_id', 'topic_created', 'accessed']
     if filepath:
-        with open(filepath, 'a+', encoding="utf-8", newline='') as csvfile:
-            if csvfile.tell() == 0:
-                csvwriter = csv.DictWriter(csvfile, fieldnames=fields)
-                csvwriter.writeheader()
-            else:
-                csvfile.seek(0, 0)
-                csvreader = csv.DictReader(csvfile)
-                if csvreader.fieldnames != fields:
-                    print("unexpected fields found in already existing file")
-                    return
+        mech_io.prepare_appending_csv(filepath, fields)
 
     session = requests.Session()
     base_url = "https://" + forum_url + "/index.php?topic="
@@ -157,11 +143,6 @@ def scrape_topics(forum_url, topic_ids, limit_topics=None, offset=0, limit_date=
     for topic_id in topic_ids:
 
         current_url = base_url + topic_id + ".0"
-
-        # # use a test local file to check that the format parsing works
-        # print("fake scrape: " + current_url)
-        # with open("testtopic.html") as test_topic:
-        #     soup = BeautifulSoup(test_topic, 'html5lib')
 
         # access current url for page to scrape
         print("requesting: topic " + topic_id)
@@ -176,17 +157,12 @@ def scrape_topics(forum_url, topic_ids, limit_topics=None, offset=0, limit_date=
 
         if postdir:
             # TODO: implement default postdir using pathlib
-            json_filepath = postdir + "/topic" + topic_id + "_postdata.json"
-            json_data = json.dumps(current_data, indent=4, default=(lambda x: x.__str__()))
-            with open(json_filepath, 'w') as pdfile:
-                pdfile.write(json_data)
+            # TODO: rework arguments to have separate arguments for using a method to save and the place to save
+            mech_io.write_post_json(topic_id, current_data, folder=postdir)
 
         if filepath:
             # TODO: implement default filepath using pathlib
-            with open(filepath, 'a', encoding="utf-8", newline='') as csvfile:
-                fields = ['topic_id', 'topic_created', 'accessed']
-                csvwriter = csv.DictWriter(csvfile, fieldnames=fields)
-                csvwriter.writerow(current_data_short)
+            mech_io.append_csv(current_data_short, filepath, fields)
 
         # TODO: implement date limit in scrape_topics()
         # if limit_date:

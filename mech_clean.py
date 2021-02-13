@@ -4,6 +4,7 @@ import regex
 from pathlib import Path
 import emoji
 import pandas as pd
+import mech_io
 from lark import Lark
 
 
@@ -24,9 +25,7 @@ def clean_board_data(in_data=None, in_filepath=None, out_filepath=None):
         else:
             raise ValueError("improperly formatted input data")
     elif in_filepath:
-        with open(in_filepath, 'r', encoding="utf-8", newline='') as in_csv:
-            in_reader = csv.DictReader(in_csv)
-            raw_data = [csv_topic for csv_topic in in_reader]
+        raw_data = mech_io.read_csv(in_filepath)
     else:
         raise ValueError("no valid input provided")
 
@@ -40,13 +39,7 @@ def clean_board_data(in_data=None, in_filepath=None, out_filepath=None):
         # save data to csv - note this does not include an index field other than topic id
         fields = ['topic_id', 'product_type', 'thread_type', 'info_codes', 'set_name', 'creator', 'creator_id', 'views',
                   'replies', 'board', 'access_date', 'title']
-        with open(out_filepath, 'w', encoding="utf-8", newline='') as out_csv:
-            # TODO: implement a check if this file exists already, maybe a parameter to control if it overwrites
-            # TODO: split all the file read/writes into own functions in a mech_utils.py file (for better testing,
-            #  less repetition) - parameters would be filepath, fields (where it makes sense), and open mode for write
-            out_writer = csv.DictWriter(out_csv, fieldnames=fields)
-            out_writer.writeheader()
-            out_writer.writerows(out_data)
+        mech_io.write_csv(out_data, out_filepath, fields)
 
         print(f"Saved to {out_filepath}")
 

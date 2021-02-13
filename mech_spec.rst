@@ -80,8 +80,7 @@ SQLite Schema
 		replies VARCHAR
 		views VARCHAR
 		last_post VARCHAR
-		page_url VARCHAR
-		board INTEGER
+		url VARCHAR
 		accessed VARCHAR -> datetime
 
 	page_raw
@@ -110,11 +109,14 @@ SQLite Schema
 		creator_id INTEGER
 		views INTEGER
 		replies INTEGER
-		topic_created VARCHAR -> datetime
 		board INTEGER
 		board_accessed VARCHAR -> datetime
-		topic_accessed VARCHAR -> datetime
 		title VARCHAR
+
+	topic_page_data
+		topic_id INTEGER PRIMARY KEY
+		topic_created VARCHAR -> datetime
+		topic_accessed VARCHAR -> datetime
 
 	topic_icode
 		id INTEGER PRIMARY KEY
