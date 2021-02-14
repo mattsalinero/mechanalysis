@@ -41,7 +41,7 @@ class TestParseBasic(TestCase):
 
     def test_parse_basic_blank_input(self):
         blankinput = {'topic_link': "https://testsite.org/index.php?topic=123456.0", 'creator': None,
-                      'creator_link': None, 'views': None, 'replies': None, 'lastpost': None, 'url': None,
+                      'creator_link': None, 'views': None, 'replies': None, 'last_post': None, 'url': None,
                       'accessed': None, 'title': None
                       }
 

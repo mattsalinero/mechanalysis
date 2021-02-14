@@ -72,55 +72,56 @@ Data storage will be accomplished using two systems
 SQLite Schema
 
 	board_raw
-		id INTEGER PRIMARY KEY
-		title VARCHAR
-		topic_link VARCHAR
-		creator VARCHAR
-		creator_link VARCHAR
-		replies VARCHAR
-		views VARCHAR
-		last_post VARCHAR
-		url VARCHAR
+		id INTEGER PRIMARY KEY,
+		title VARCHAR,
+		topic_link VARCHAR,
+		creator VARCHAR,
+		creator_link VARCHAR,
+		replies VARCHAR,
+		views VARCHAR, 
+		last_post VARCHAR,
+		url VARCHAR,
 		accessed VARCHAR -> datetime
 
 	page_raw
-		topic_id INTEGER PRIMARY KEY -> topic_id now a number
-		topic_created VARCHAR -> datetime
+		topic_id INTEGER PRIMARY KEY, -> topic_id now a number
+		topic_created VARCHAR, -> datetime
 		topic_accessed VARCHAR -> datetime
 
 	page_link
-		id INTEGER PRIMARY KEY
-		topic_id INTEGER NOT NULL
+		id INTEGER PRIMARY KEY,
+		topic_id INTEGER NOT NULL,
 		link VARCHAR NOT NULL
 
 	page_image
-		id INTEGER PRIMARY KEY
-		topic_id INTEGER NOT NULL
-		image_link VARCHAR NOT NULL
+		id INTEGER PRIMARY KEY,
+		topic_id INTEGER NOT NULL,
+		image_source VARCHAR NOT NULL
 
 	??post_raw??
 
 	topic_data
-		topic_id INTEGER PRIMARY KEY
-		product_type VARCHAR
-		thread_type VARCHAR
-		set_name VARCHAR
-		creator VARCHAR
-		creator_id INTEGER
-		views INTEGER
-		replies INTEGER
-		board INTEGER
-		board_accessed VARCHAR -> datetime
+		topic_id INTEGER PRIMARY KEY,
+		product_type VARCHAR,
+		thread_type VARCHAR,
+		set_name VARCHAR,
+		creator VARCHAR,
+		creator_id INTEGER,
+		views INTEGER,
+		replies INTEGER,
+		board INTEGER,
+		board_accessed VARCHAR, -> datetime
 		title VARCHAR
 
-	topic_page_data
-		topic_id INTEGER PRIMARY KEY
-		topic_created VARCHAR -> datetime
+	??topic_page_data??
+		topic_id INTEGER PRIMARY KEY,
+		topic_created VARCHAR, -> datetime
 		topic_accessed VARCHAR -> datetime
+		nonimage_links INTEGER
 
 	topic_icode
-		id INTEGER PRIMARY KEY
-		topic_id INTEGER NOT NULL
+		id INTEGER PRIMARY KEY,
+		topic_id INTEGER NOT NULL,
 		info_code VARCHAR NOT NULL
 
 File based system

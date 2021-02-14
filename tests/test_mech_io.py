@@ -135,3 +135,75 @@ class TestWritePostJson(TestCase):
 
         self.assertEqual(test_data, result_data)
         os.remove(test_filepath)
+
+
+class TestDBSetup(TestCase):
+    def test_db_setup(self):
+        # TODO: improve test_db_setup() to actually test the name/schema of the created dbs
+        test_setup = Path(__file__).parent / "fixtures" / "test_setup.db"
+        db_setup(test_setup)
+
+        conn = sqlite3.connect(test_setup)
+        tables = conn.execute("""SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'""")
+        table_list = tables.fetchall()
+        self.assertEqual(6, len(table_list))
+        conn.close()
+        os.remove(test_setup)
+
+
+class TestDBInsertBoardRaw(TestCase):
+    def setUp(self):
+        self.test_db = Path(__file__).parent / "fixtures" / "test_insert.db"
+        conn = sqlite3.connect(self.test_db)
+        c = conn.cursor()
+        c.execute("""CREATE TABLE board_raw (
+                    id INTEGER PRIMARY KEY,
+                    title VARCHAR,
+                    topic_link VARCHAR NOT NULL,
+                    creator VARCHAR,
+                    creator_link VARCHAR,
+                    views VARCHAR,
+                    replies VARCHAR,
+                    last_post VARCHAR,
+                    url VARCHAR,
+                    accessed VARCHAR); 
+                    """)
+        conn.commit()
+        conn.close()
+
+    def tearDown(self):
+        os.remove(self.test_db)
+
+    def test_db_insert_board_raw(self):
+        # TODO: redo this unit test to not rely on constantly remaking db/figure out how to actually delete if crash
+
+        conn = sqlite3.connect(self.test_db)
+        conn.row_factory = sqlite3.Row
+        test_data = [{'topic_link': "test_insert1", 'creator': "test_insert2", 'creator_link': None, 'views': None,
+                      'replies': None, 'last_post': None, 'url': None, 'accessed': None, 'title': None},
+                     {'topic_link': "test_insert3", 'creator': None, 'creator_link': None, 'views': None,
+                      'replies': None, 'last_post': None, 'url': None, 'accessed': None, 'title': None}
+                     ]
+        db_insert_board_raw(test_data, db=self.test_db)
+
+        result_data = conn.execute("""SELECT * FROM board_raw""").fetchall()
+        conn.close()
+        self.assertEqual("test_insert1", result_data[0]['topic_link'])
+        self.assertEqual("test_insert2", result_data[0]['creator'])
+        self.assertEqual("test_insert3", result_data[1]['topic_link'])
+
+    def test_db_insert_board_raw_single(self):
+        conn = sqlite3.connect(self.test_db)
+        conn.row_factory = sqlite3.Row
+        test_data = {'topic_link': "test_insert1", 'creator': "test_insert2", 'creator_link': None, 'views': None,
+                     'replies': None, 'last_post': None, 'url': None, 'accessed': None, 'title': None}
+        db_insert_board_raw(test_data, db=self.test_db)
+
+        result_data = conn.execute("""SELECT * FROM board_raw""").fetchall()
+        conn.close()
+        self.assertEqual("test_insert1", result_data[0]['topic_link'])
+        self.assertEqual("test_insert2", result_data[0]['creator'])
+
+    def test_db_insert_board_raw_error(self):
+        with self.assertRaises(ValueError):
+            db_insert_board_raw("improper input", db=self.test_db)
