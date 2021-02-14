@@ -69,39 +69,15 @@ The webscraper will first take in topic titles from the Group Buy and Interest C
 
 Data storage will be accomplished using two systems
 
-SQLite Schema
+DATABASE (using SQLite)
 
-	board_raw
-		id INTEGER PRIMARY KEY,
-		title VARCHAR,
-		topic_link VARCHAR,
-		creator VARCHAR,
-		creator_link VARCHAR,
-		replies VARCHAR,
-		views VARCHAR, 
-		last_post VARCHAR,
-		url VARCHAR,
-		accessed VARCHAR -> datetime
+The database will be used to store only cleaned/already processed data (not the raw scraped data). As data will be overwritten if rescraped/etc., it's not necessary to store the raw data (whose primary use is archival) in the database. Similarly, as this project is only focused on keycaps (for the moment), the system will store cleaned data about non-keycap threads, but not perform page-based analysis on those threads. The database will be designed in such a way that it can be re-generated fairly rapidly (from archived raw data) if schema changes are needed due to additional data becoming available.
 
-	page_raw
-		topic_id INTEGER PRIMARY KEY, -> topic_id now a number
-		topic_created VARCHAR, -> datetime
-		topic_accessed VARCHAR -> datetime
-
-	page_link
-		id INTEGER PRIMARY KEY,
-		topic_id INTEGER NOT NULL,
-		link VARCHAR NOT NULL
-
-	page_image
-		id INTEGER PRIMARY KEY,
-		topic_id INTEGER NOT NULL,
-		image_source VARCHAR NOT NULL
-
-	??post_raw??
+Schema
 
 	topic_data
-		topic_id INTEGER PRIMARY KEY,
+		topic_id INTEGER PRIMARY KEY, -> topic_id now a number
+		topic_created VARCHAR, -> datetime
 		product_type VARCHAR,
 		thread_type VARCHAR,
 		set_name VARCHAR,
@@ -110,21 +86,33 @@ SQLite Schema
 		views INTEGER,
 		replies INTEGER,
 		board INTEGER,
+		topic_accessed VARCHAR -> datetime
 		board_accessed VARCHAR, -> datetime
 		title VARCHAR
-
-	??topic_page_data??
-		topic_id INTEGER PRIMARY KEY,
-		topic_created VARCHAR, -> datetime
-		topic_accessed VARCHAR -> datetime
-		nonimage_links INTEGER
 
 	topic_icode
 		id INTEGER PRIMARY KEY,
 		topic_id INTEGER NOT NULL,
 		info_code VARCHAR NOT NULL
 
-File based system
+	topic_link
+		id INTEGER PRIMARY KEY,
+		topic_id INTEGER NOT NULL,
+		link VARCHAR NOT NULL
+
+	topic_image
+		id INTEGER PRIMARY KEY,
+		topic_id INTEGER NOT NULL,
+		image_source VARCHAR NOT NULL
+
+	(FUTURE) topic_advanced
+		topic_id INTEGER PRIMARY KEY
+		num_nonimage_links INTEGER
+
+
+FILE STORAGE SYSTEM
+
+
 
 *DATA PROCESSING*
 

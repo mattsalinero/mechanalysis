@@ -92,60 +92,45 @@ def db_setup(db):
     c = conn.cursor()
 
     table_sqls = {}
-    table_sqls['board_raw'] = """CREATE TABLE board_raw (
-        id INTEGER PRIMARY KEY,
-        title VARCHAR,
-        topic_link VARCHAR NOT NULL,
-        creator VARCHAR,
-        creator_link VARCHAR,
-        views VARCHAR,
-        replies VARCHAR,
-        last_post VARCHAR,
-        url VARCHAR,
-        accessed VARCHAR); 
-        """
-    table_sqls['page_raw'] = """CREATE TABLE page_raw (
-        topic_id INTEGER PRIMARY KEY,
-        topic_created VARCHAR,
-        topic_accessed VARCHAR);
-        """
-    table_sqls['page_link'] = """CREATE TABLE page_link (
-        id INTEGER PRIMARY KEY,
-        topic_id INTEGER NOT NULL,
-        link VARCHAR NOT NULL);
-        """
-    table_sqls['page_image'] = """CREATE TABLE page_image (
-        id INTEGER PRIMARY KEY,
-        topic_id INTEGER NOT NULL,
-        image_source VARCHAR NOT NULL);
-        """
     table_sqls['topic_data'] = """CREATE TABLE topic_data (
-        topic_id INTEGER PRIMARY KEY,
+        topic_id VARCHAR PRIMARY KEY,
+        topic_created VARCHAR,
         product_type VARCHAR,
         thread_type VARCHAR,
         set_name VARCHAR,
         creator VARCHAR,
-        creator_id INTEGER,      
+        creator_id VARCHAR,      
         views INTEGER,
         replies INTEGER,
         board INTEGER,
-        board_accessed VARCHAR
+        topic_accessed VARCHAR,
+        board_accessed VARCHAR,
         title VARCHAR); 
         """
     table_sqls['topic_icode'] = """CREATE TABLE topic_icode (
-        topic_id INTEGER NOT NULL,
+        topic_id VARCHAR NOT NULL,
         info_code VARCHAR NOT NULL,
         PRIMARY KEY (topic_id, info_code));
         """
-
+    table_sqls['topic_link'] = """CREATE TABLE page_link (
+        id INTEGER PRIMARY KEY,
+        topic_id VARCHAR NOT NULL,
+        link VARCHAR NOT NULL);
+        """
+    table_sqls['topic_image'] = """CREATE TABLE page_image (
+        id INTEGER PRIMARY KEY,
+        topic_id VARCHAR NOT NULL,
+        image_source VARCHAR NOT NULL);
+        """
     for table in table_sqls.keys():
         c.execute(table_sqls[table])
     conn.commit()
     conn.close()
+
     return
 
 
-def db_insert_board_raw(data, db=None):
+def db_insert_board_clean(data, db=None):
     if not db:
         db = Path(__file__).parent / "data" / "database" / "mech_db"
 
@@ -156,14 +141,26 @@ def db_insert_board_raw(data, db=None):
     else:
         raise ValueError("data should be dict or list of dicts with keys corresponding to table schema")
 
+    info_codes = []
+    for entry in values:
+        if entry['info_codes']:
+            for info_code in entry['info_codes']:
+                info_codes.append({'topic_id': entry['topic_id'], 'info_code': info_code})
+
     conn = sqlite3.connect(db)
 
-    query = """INSERT INTO board_raw (title, topic_link, creator, creator_link, 
-                                        views, replies, last_post, url, accessed)
-                VALUES (:title, :topic_link, :creator, :creator_link, :views, :replies, :last_post, :url, :accessed);
+    query_topic_data = """INSERT INTO topic_data (topic_id, product_type, thread_type, set_name, creator, creator_id, 
+                                        views, replies, board, board_accessed, title)
+                VALUES (:topic_id, :product_type, :thread_type, :set_name, :creator, :creator_id, :views,
+                  :replies, :board, :access_date, :title);
+                """
+    query_topic_icode = """INSERT OR REPLACE INTO topic_icode (topic_id, info_code)
+                VALUES (:topic_id, :info_code);
                 """
 
-    conn.executemany(query, values)
+    conn.executemany(query_topic_data, values)
+    conn.executemany(query_topic_icode, info_codes)
+
     conn.commit()
     conn.close()
 

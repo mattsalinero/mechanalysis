@@ -146,64 +146,61 @@ class TestDBSetup(TestCase):
         conn = sqlite3.connect(test_setup)
         tables = conn.execute("""SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'""")
         table_list = tables.fetchall()
-        self.assertEqual(6, len(table_list))
+        self.assertEqual(4, len(table_list))
         conn.close()
         os.remove(test_setup)
 
 
-class TestDBInsertBoardRaw(TestCase):
+class TestDBInsertBoardClean(TestCase):
     def setUp(self):
         self.test_db = Path(__file__).parent / "fixtures" / "test_insert.db"
-        conn = sqlite3.connect(self.test_db)
-        c = conn.cursor()
-        c.execute("""CREATE TABLE board_raw (
-                    id INTEGER PRIMARY KEY,
-                    title VARCHAR,
-                    topic_link VARCHAR NOT NULL,
-                    creator VARCHAR,
-                    creator_link VARCHAR,
-                    views VARCHAR,
-                    replies VARCHAR,
-                    last_post VARCHAR,
-                    url VARCHAR,
-                    accessed VARCHAR); 
-                    """)
-        conn.commit()
-        conn.close()
+        db_setup(self.test_db)
 
     def tearDown(self):
         os.remove(self.test_db)
 
-    def test_db_insert_board_raw(self):
+    def test_db_insert_board_clean(self):
         # TODO: redo this unit test to not rely on constantly remaking db/figure out how to actually delete if crash
 
         conn = sqlite3.connect(self.test_db)
         conn.row_factory = sqlite3.Row
-        test_data = [{'topic_link': "test_insert1", 'creator': "test_insert2", 'creator_link': None, 'views': None,
-                      'replies': None, 'last_post': None, 'url': None, 'accessed': None, 'title': None},
-                     {'topic_link': "test_insert3", 'creator': None, 'creator_link': None, 'views': None,
-                      'replies': None, 'last_post': None, 'url': None, 'accessed': None, 'title': None}
+        test_data = [{'topic_id': "111111", 'product_type': "keycaps", 'thread_type': None,
+                      'info_codes': ["TC1", "TC2"], 'set_name': None, 'creator': None, 'creator_id': None,
+                      'views': 111, 'replies': None, 'board': None, 'access_date': None, 'title': None},
+                     {'topic_id': "222222", 'product_type': "keycaps", 'thread_type': None,
+                      'info_codes': None, 'set_name': None, 'creator': None, 'creator_id': None,
+                      'views': 222, 'replies': None, 'board': None, 'access_date': None, 'title': None}
                      ]
-        db_insert_board_raw(test_data, db=self.test_db)
+        db_insert_board_clean(test_data, db=self.test_db)
 
-        result_data = conn.execute("""SELECT * FROM board_raw""").fetchall()
+        result_topic_data = conn.execute("""SELECT * FROM topic_data""").fetchall()
+        result_topic_icode = conn.execute("""SELECT * FROM topic_icode""").fetchall()
         conn.close()
-        self.assertEqual("test_insert1", result_data[0]['topic_link'])
-        self.assertEqual("test_insert2", result_data[0]['creator'])
-        self.assertEqual("test_insert3", result_data[1]['topic_link'])
+        self.assertEqual("111111", result_topic_data[0]['topic_id'])
+        self.assertEqual("keycaps", result_topic_data[0]['product_type'])
+        self.assertEqual(111, result_topic_data[0]['views'])
+        self.assertEqual("222222", result_topic_data[1]['topic_id'])
+        self.assertEqual("keycaps", result_topic_data[1]['product_type'])
+        self.assertEqual(222, result_topic_data[1]['views'])
+        self.assertEqual("111111", result_topic_icode[0]['topic_id'])
+        self.assertEqual("TC1", result_topic_icode[0]['info_code'])
+        self.assertEqual("111111", result_topic_icode[1]['topic_id'])
+        self.assertEqual("TC2", result_topic_icode[1]['info_code'])
 
-    def test_db_insert_board_raw_single(self):
+    def test_db_insert_board_clean_single(self):
         conn = sqlite3.connect(self.test_db)
         conn.row_factory = sqlite3.Row
-        test_data = {'topic_link': "test_insert1", 'creator': "test_insert2", 'creator_link': None, 'views': None,
-                     'replies': None, 'last_post': None, 'url': None, 'accessed': None, 'title': None}
-        db_insert_board_raw(test_data, db=self.test_db)
+        test_data = {'topic_id': "111111", 'product_type': "keycaps", 'thread_type': None,
+                     'info_codes': ["TC1", "TC2"], 'set_name': None, 'creator': None, 'creator_id': None,
+                     'views': 111, 'replies': None, 'board': None, 'access_date': None, 'title': None}
+        db_insert_board_clean(test_data, db=self.test_db)
 
-        result_data = conn.execute("""SELECT * FROM board_raw""").fetchall()
+        result_data = conn.execute("""SELECT * FROM topic_data""").fetchall()
         conn.close()
-        self.assertEqual("test_insert1", result_data[0]['topic_link'])
-        self.assertEqual("test_insert2", result_data[0]['creator'])
+        self.assertEqual("111111", result_data[0]['topic_id'])
+        self.assertEqual("keycaps", result_data[0]['product_type'])
+        self.assertEqual(111, result_data[0]['views'])
 
-    def test_db_insert_board_raw_error(self):
+    def test_db_insert_board_clean_error(self):
         with self.assertRaises(ValueError):
-            db_insert_board_raw("improper input", db=self.test_db)
+            db_insert_board_clean("improper input", db=self.test_db)
