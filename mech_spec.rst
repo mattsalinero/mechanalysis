@@ -76,38 +76,44 @@ The database will be used to store only cleaned/already processed data (not the 
 Schema
 
 	topic_data
-		topic_id INTEGER PRIMARY KEY, -> topic_id now a number
+		topic_id VARCHAR PRIMARY KEY, -> topic_id is a number in this case (but stored as a string)
 		topic_created VARCHAR, -> datetime
 		product_type VARCHAR,
 		thread_type VARCHAR,
 		set_name VARCHAR,
 		creator VARCHAR,
-		creator_id INTEGER,
+		creator_id VARCHAR,
 		views INTEGER,
 		replies INTEGER,
-		board INTEGER,
-		topic_accessed VARCHAR -> datetime
+		board VARCHAR,
+		topic_accessed VARCHAR, -> datetime
 		board_accessed VARCHAR, -> datetime
 		title VARCHAR
 
 	topic_icode
-		id INTEGER PRIMARY KEY,
-		topic_id INTEGER NOT NULL,
-		info_code VARCHAR NOT NULL
+		topic_id VARCHAR NOT NULL,
+		info_code VARCHAR NOT NULL,
+		PRIMARY KEY (topic_id, info_code),
+		FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id)
 
-	topic_link
+	(FUTURE) topic_link
 		id INTEGER PRIMARY KEY,
-		topic_id INTEGER NOT NULL,
-		link VARCHAR NOT NULL
+		topic_id VARCHAR NOT NULL,
+		link VARCHAR NOT NULL,
+		FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id)
 
-	topic_image
+	(FUTURE) topic_image
 		id INTEGER PRIMARY KEY,
-		topic_id INTEGER NOT NULL,
-		image_source VARCHAR NOT NULL
+		topic_id VARCHAR NOT NULL,
+		image_source VARCHAR NOT NULL,
+		FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id)
 
 	(FUTURE) topic_advanced
-		topic_id INTEGER PRIMARY KEY
-		num_nonimage_links INTEGER
+		topic_id VARCHAR PRIMARY KEY,
+		num_nonimage_links INTEGER,
+		num_creator_posts INTEGER,
+		percent_creator_posts FLOAT,
+		FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id)
 
 
 FILE STORAGE SYSTEM

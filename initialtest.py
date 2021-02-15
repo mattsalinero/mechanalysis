@@ -22,8 +22,10 @@ from mech_clean import *
 # print(parse_board_data(["[GB]Enjoypbt KON MOMO (7.10~7.30)"]))
 
 # clean_board_data(in_filepath="data/210121gb_raw.csv", out_filepath="data/210121gb_clean.csv")
-clean_board_data(in_filepath="data/210121ic_raw.csv", out_filepath="data/210121ic_clean_test.csv")
+# clean_board_data(in_filepath="data/210121ic_raw.csv", out_filepath="data/210121ic_clean_test.csv")
 
 # test_topics = [110511, 110355]
 # # test_topics = [110530, 110511, 110455, 110355, 109403, 109307, 109140, 109000, 108983, 108949]
 # scrape_topics("geekhack.org", test_topics, filepath="data/testtopicdata.csv", postdir="data/post_data")
+
+clean_board_data(in_filepath="tests/fixtures/test_raw_data.csv", out_filepath="tests/fixtures/test_clean_data.csv")

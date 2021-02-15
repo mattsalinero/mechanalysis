@@ -123,6 +123,8 @@ def _board_topic_count(soup):
 
 def scrape_topics(forum_url, topic_ids, limit_topics=None, offset=0, limit_date=None, request_interval=10,
                   filepath=None, postdir=None):
+    # TODO: rework this function to actually return the full data/not aggregate to csv -> when using primarily the
+    #  db, having the truncated version isn't useful
     if limit_topics and len(topic_ids) > limit_topics:
         if offset > len(topic_ids):
             print(f"offset of {offset} larger than {len(topic_ids)} provided topics")

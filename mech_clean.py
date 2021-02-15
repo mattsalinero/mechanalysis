@@ -8,13 +8,14 @@ import mech_io
 from lark import Lark
 
 
-def clean_board_data(in_data=None, in_filepath=None, out_filepath=None):
+def clean_board_data(in_data=None, in_filepath=None, out_filepath=None, out_db=None):
     """
     Cleans scraped data from board index page into more readable format, supports reading from and saving to files
     :param in_data: list[dict] each element is extracted data for one topic on board index page
      (priority over in_filepath)
     :param in_filepath: filepath to csv equivalent of in_data
     :param out_filepath: (optional) filepath to save resulting data
+    :param out_db: (optional) filepath to sqlite database to save resulting data
     :return: list[dict] of cleaned data
     """
     # TODO: make another function to deal with DataFrame input (clean_board_dataframe()?), leave this one for list[dict]
@@ -42,6 +43,11 @@ def clean_board_data(in_data=None, in_filepath=None, out_filepath=None):
         mech_io.write_csv(out_data, out_filepath, fields)
 
         print(f"Saved to {out_filepath}")
+
+    # TODO: update unit test to test saving to database
+    if out_db:
+        mech_io.db_insert_board_clean(out_data, out_db)
+        print(f"Added to {out_db}")
 
     return out_data
 

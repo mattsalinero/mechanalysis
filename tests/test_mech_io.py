@@ -146,24 +146,23 @@ class TestDBSetup(TestCase):
         conn = sqlite3.connect(test_setup)
         tables = conn.execute("""SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'""")
         table_list = tables.fetchall()
-        self.assertEqual(4, len(table_list))
+        self.assertEqual(2, len(table_list))
         conn.close()
         os.remove(test_setup)
 
 
-class TestDBInsertBoardClean(TestCase):
+class TestInsertBoardClean(TestCase):
     def setUp(self):
         self.test_db = Path(__file__).parent / "fixtures" / "test_insert.db"
-        db_setup(self.test_db)
+        # db_setup(self.test_db)
 
     def tearDown(self):
         os.remove(self.test_db)
 
     def test_db_insert_board_clean(self):
         # TODO: redo this unit test to not rely on constantly remaking db/figure out how to actually delete if crash
+        # TODO: there is a potential problem with inserting the datetime objects - use iso format strings instead
 
-        conn = sqlite3.connect(self.test_db)
-        conn.row_factory = sqlite3.Row
         test_data = [{'topic_id': "111111", 'product_type': "keycaps", 'thread_type': None,
                       'info_codes': ["TC1", "TC2"], 'set_name': None, 'creator': None, 'creator_id': None,
                       'views': 111, 'replies': None, 'board': None, 'access_date': None, 'title': None},
@@ -173,6 +172,8 @@ class TestDBInsertBoardClean(TestCase):
                      ]
         db_insert_board_clean(test_data, db=self.test_db)
 
+        conn = sqlite3.connect(self.test_db)
+        conn.row_factory = sqlite3.Row
         result_topic_data = conn.execute("""SELECT * FROM topic_data""").fetchall()
         result_topic_icode = conn.execute("""SELECT * FROM topic_icode""").fetchall()
         conn.close()
@@ -188,13 +189,13 @@ class TestDBInsertBoardClean(TestCase):
         self.assertEqual("TC2", result_topic_icode[1]['info_code'])
 
     def test_db_insert_board_clean_single(self):
-        conn = sqlite3.connect(self.test_db)
-        conn.row_factory = sqlite3.Row
         test_data = {'topic_id': "111111", 'product_type': "keycaps", 'thread_type': None,
                      'info_codes': ["TC1", "TC2"], 'set_name': None, 'creator': None, 'creator_id': None,
                      'views': 111, 'replies': None, 'board': None, 'access_date': None, 'title': None}
         db_insert_board_clean(test_data, db=self.test_db)
 
+        conn = sqlite3.connect(self.test_db)
+        conn.row_factory = sqlite3.Row
         result_data = conn.execute("""SELECT * FROM topic_data""").fetchall()
         conn.close()
         self.assertEqual("111111", result_data[0]['topic_id'])
@@ -204,3 +205,43 @@ class TestDBInsertBoardClean(TestCase):
     def test_db_insert_board_clean_error(self):
         with self.assertRaises(ValueError):
             db_insert_board_clean("improper input", db=self.test_db)
+
+
+class TestInsertTopicClean(TestCase):
+    def setUp(self):
+        self.test_db = Path(__file__).parent / "fixtures" / "test_db.db"
+        db_setup(self.test_db)
+        base_data = read_csv(Path(__file__).parent / "fixtures" / "test_clean_data.csv")
+        db_insert_board_clean(base_data, db=self.test_db)
+
+    def tearDown(self):
+        os.remove(self.test_db)
+
+    def test_db_insert_topic_clean(self):
+        test_data = read_csv(Path(__file__).parent / "fixtures" / "test_topic_data.csv")
+        db_insert_topic_clean(test_data, self.test_db)
+
+        conn = sqlite3.connect(self.test_db)
+        conn.row_factory = sqlite3.Row
+        result_data = conn.execute("""SELECT * FROM topic_data WHERE topic_id = '110579'""").fetchall()
+        conn.close()
+        self.assertEqual("2021-01-01 00:01:00", result_data[0]['topic_created'])
+        self.assertEqual("2021-01-21 23:06:50", result_data[0]['topic_accessed'])
+
+
+class TestQueryKeycapTopics(TestCase):
+    def setUp(self):
+        self.test_db = Path(__file__).parent / "fixtures" / "test_db.db"
+        db_setup(self.test_db)
+        test_data = read_csv(Path(__file__).parent / "fixtures" / "test_clean_data.csv")
+        db_insert_board_clean(test_data, db=self.test_db)
+
+    def tearDown(self):
+        os.remove(self.test_db)
+
+    def test_db_query_keycap_topics(self):
+        # TODO: To finish this unit test and check for conditions, need to get a test db with more significant data
+        #  (entries with topic-level data and different boards)
+        result_data = db_query_keycap_topics(self.test_db)
+        self.assertEqual("110579", result_data[0])
+        self.assertEqual(7, len(result_data))

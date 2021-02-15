@@ -84,12 +84,13 @@ def write_post_json(topic_id, data, folder=None):
     return
 
 
-def db_setup(db):
-    # TODO: implement check/logic if the db already exists - otherwise could mess up the structure (and will throw
-    #  error if a table already exists)
-
-    conn = sqlite3.connect(db)
-    c = conn.cursor()
+def db_setup(db, overwrite=False):
+    # TODO: implement unit test for this
+    if os.path.isfile(db):
+        if overwrite:
+            os.remove(db)
+        else:
+            raise FileExistsError("db file already exists")
 
     table_sqls = {}
     table_sqls['topic_data'] = """CREATE TABLE topic_data (
@@ -102,7 +103,7 @@ def db_setup(db):
         creator_id VARCHAR,      
         views INTEGER,
         replies INTEGER,
-        board INTEGER,
+        board VARCHAR,
         topic_accessed VARCHAR,
         board_accessed VARCHAR,
         title VARCHAR); 
@@ -110,18 +111,23 @@ def db_setup(db):
     table_sqls['topic_icode'] = """CREATE TABLE topic_icode (
         topic_id VARCHAR NOT NULL,
         info_code VARCHAR NOT NULL,
-        PRIMARY KEY (topic_id, info_code));
+        PRIMARY KEY (topic_id, info_code),
+        FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id));
         """
-    table_sqls['topic_link'] = """CREATE TABLE page_link (
-        id INTEGER PRIMARY KEY,
-        topic_id VARCHAR NOT NULL,
-        link VARCHAR NOT NULL);
-        """
-    table_sqls['topic_image'] = """CREATE TABLE page_image (
-        id INTEGER PRIMARY KEY,
-        topic_id VARCHAR NOT NULL,
-        image_source VARCHAR NOT NULL);
-        """
+    # table_sqls['topic_link'] = """CREATE TABLE page_link (
+    #     id INTEGER PRIMARY KEY,
+    #     topic_id VARCHAR NOT NULL,
+    #     link VARCHAR NOT NULL);
+    #     """
+    # table_sqls['topic_image'] = """CREATE TABLE page_image (
+    #     id INTEGER PRIMARY KEY,
+    #     topic_id VARCHAR NOT NULL,
+    #     image_source VARCHAR NOT NULL);
+    #     """
+
+    conn = sqlite3.connect(db)
+    c = conn.cursor()
+
     for table in table_sqls.keys():
         c.execute(table_sqls[table])
     conn.commit()
@@ -130,9 +136,22 @@ def db_setup(db):
     return
 
 
-def db_insert_board_clean(data, db=None):
+def _db_check_exists(db, setup=False):
+    # TODO: unit test?
+    if os.path.exists(db):
+        return True
+    elif setup:
+        db_setup(db)
+        return False
+    else:
+        raise FileNotFoundError("db file does not exist")
+
+
+def db_insert_board_clean(data, db=None, new_db=True):
     if not db:
         db = Path(__file__).parent / "data" / "database" / "mech_db"
+
+    _db_check_exists(db, setup=new_db)
 
     if type(data) == dict:
         values = [data]
@@ -147,21 +166,85 @@ def db_insert_board_clean(data, db=None):
             for info_code in entry['info_codes']:
                 info_codes.append({'topic_id': entry['topic_id'], 'info_code': info_code})
 
-    conn = sqlite3.connect(db)
-
-    query_topic_data = """INSERT INTO topic_data (topic_id, product_type, thread_type, set_name, creator, creator_id, 
+    topic_data_query = """INSERT INTO topic_data (topic_id, product_type, thread_type, set_name, creator, creator_id, 
                                         views, replies, board, board_accessed, title)
                 VALUES (:topic_id, :product_type, :thread_type, :set_name, :creator, :creator_id, :views,
                   :replies, :board, :access_date, :title);
                 """
-    query_topic_icode = """INSERT OR REPLACE INTO topic_icode (topic_id, info_code)
+    topic_icode_query = """INSERT OR REPLACE INTO topic_icode (topic_id, info_code)
                 VALUES (:topic_id, :info_code);
                 """
 
-    conn.executemany(query_topic_data, values)
-    conn.executemany(query_topic_icode, info_codes)
+    conn = sqlite3.connect(db)
+
+    conn.executemany(topic_data_query, values)
+    conn.executemany(topic_icode_query, info_codes)
 
     conn.commit()
     conn.close()
 
     return
+
+
+def db_insert_topic_clean(data, db=None):
+    # TODO: fix "accessed" vs "topic_accessed" in schema
+    # TODO: implement unit test
+
+    if not db:
+        db = Path(__file__).parent / "data" / "database" / "mech_db"
+
+    _db_check_exists(db, setup=False)
+
+    if type(data) == dict:
+        values = [data]
+    elif type(data) == list:
+        values = data
+    else:
+        raise ValueError("data should be dict or list of dicts with keys corresponding to table schema")
+
+    topic_data_query = """
+        UPDATE topic_data
+        SET topic_created = :topic_created,
+            topic_accessed = :accessed
+        WHERE topic_id = :topic_id;"""
+
+    conn = sqlite3.connect(db)
+
+    conn.executemany(topic_data_query, values)
+
+    conn.commit()
+    conn.close()
+
+    return
+
+
+def db_query_keycap_topics(db=None, board=None, select_restriction=None):
+    if not db:
+        db = Path(__file__).parent / "data" / "database" / "mech_db"
+
+    values = {}
+    board_condition = ""
+    if board:
+        board_condition = "AND board = :board"
+        values['board'] = board
+
+    extra_condition = ""
+    if select_restriction:
+        if select_restriction == "new":
+            extra_condition = "AND topic_accessed IS NULL"
+        else:
+            raise ValueError("available select types are None and 'new'")
+
+    keycap_topic_query = f"""SELECT topic_id
+                          FROM topic_data
+                          WHERE product_type = 'keycaps' {board_condition} {extra_condition};
+                          """
+
+    conn = sqlite3.connect(db)
+
+    keycap_topic_list = [entry[0] for entry in conn.execute(keycap_topic_query, values).fetchall()]
+
+    conn.commit()
+    conn.close()
+
+    return keycap_topic_list
