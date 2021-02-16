@@ -11,7 +11,7 @@ class TestParseBasic(TestCase):
 
     def test_parse_basic_bad_topic_id(self):
         blankinput = {'topic_link': None, 'creator': None, 'creator_link': None, 'views': None, 'replies': None,
-                      'last_post': None, 'url': None, 'accessed': None, 'title': None}
+                      'last_post': None, 'url': None, 'board_accessed': None, 'title': None}
         with self.assertRaises(ValueError):
             parse_basic(blankinput)
         with self.assertRaises(ValueError):
@@ -26,7 +26,7 @@ class TestParseBasic(TestCase):
                      'views': "456 Views",
                      'last_post': datetime.datetime.fromisoformat("2001-01-01 01:01:01"),
                      'url': "https://geekhack.org/index.php?board=70.0;sort=first_post;desc",
-                     'accessed': datetime.datetime.fromisoformat("2002-02-02 02:02:02")
+                     'board_accessed': datetime.datetime.fromisoformat("2002-02-02 02:02:02")
                      }
 
         testoutput = parse_basic(testinput)
@@ -36,13 +36,13 @@ class TestParseBasic(TestCase):
         self.assertEqual(testoutput['views'], 456)
         self.assertEqual(testoutput['replies'], 123)
         self.assertEqual(testoutput['board'], "70")
-        self.assertEqual(testoutput['access_date'], datetime.datetime.fromisoformat("2002-02-02 02:02:02"))
+        self.assertEqual(testoutput['board_accessed'], datetime.datetime.fromisoformat("2002-02-02 02:02:02"))
         self.assertEqual(testoutput['title'], "test title")
 
     def test_parse_basic_blank_input(self):
         blankinput = {'topic_link': "https://testsite.org/index.php?topic=123456.0", 'creator': None,
                       'creator_link': None, 'views': None, 'replies': None, 'last_post': None, 'url': None,
-                      'accessed': None, 'title': None
+                      'board_accessed': None, 'title': None
                       }
 
         blankoutput = parse_basic(blankinput)
@@ -52,7 +52,7 @@ class TestParseBasic(TestCase):
         self.assertEqual(blankoutput['views'], None)
         self.assertEqual(blankoutput['replies'], None)
         self.assertEqual(blankoutput['board'], None)
-        self.assertEqual(blankoutput['access_date'], None)
+        self.assertEqual(blankoutput['board_accessed'], None)
         self.assertEqual(blankoutput['title'], None)
 
     def test_parse_basic_missing_input(self):
@@ -65,7 +65,7 @@ class TestParseBasic(TestCase):
         self.assertEqual(missingoutput['views'], None)
         self.assertEqual(missingoutput['replies'], None)
         self.assertEqual(missingoutput['board'], None)
-        self.assertEqual(missingoutput['access_date'], None)
+        self.assertEqual(missingoutput['board_accessed'], None)
         self.assertEqual(missingoutput['title'], None)
 
 

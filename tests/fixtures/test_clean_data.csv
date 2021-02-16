@@ -1,4 +1,4 @@
-topic_id,product_type,thread_type,info_codes,set_name,creator,creator_id,views,replies,board,access_date,title
+topic_id,product_type,thread_type,info_codes,set_name,creator,creator_id,views,replies,board,board_accessed,title
 110592,,GB,,,john08099,73260,2231,2,70,2021-01-21 23:06:50,"[GB]Space Trek- QMK, wired, hotswap,14 colors"
 110579,keycaps,GB,['GMK'],Iconographic,Lil,79015,7692,23,70,2021-01-21 23:06:50,[GB] GMK Iconographic - GB Live! [January 8th through February 5th]
 110564,keycaps,GB,['IFK'],Marshmallow,PRJKT_,121805,2271,6,70,2021-01-21 23:06:50,[GB] Infinikey Marshmallow | GB LIVE

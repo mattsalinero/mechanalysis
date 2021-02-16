@@ -27,7 +27,7 @@ class TestScrapePage(TestCase):
         self.assertEqual(datetime.datetime.strptime("Mon, 04 January 2021, 22:48:20", "%a, %d %B %Y, %H:%M:%S"),
                          test_output[0]['last_post'])
         self.assertEqual("test_url", test_output[0]['url'])
-        self.assertEqual(type(datetime.datetime.now()), type(test_output[0]['accessed']))
+        self.assertEqual(type(datetime.datetime.now()), type(test_output[0]['board_accessed']))
         self.assertEqual("banned user", test_output[1]['creator'])
         self.assertEqual(None, test_output[1]['creator_link'])
 

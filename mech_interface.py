@@ -11,14 +11,14 @@ print("Scraping data for " + date_code)
 if input("scrape groupbuy forum? (Y/N): ").upper() == "Y":
     raw_filepath = base_filepath + "gb_raw.csv"
     clean_filepath = base_filepath + "gb_clean.csv"
-    scrape_board("https://geekhack.org/index.php?board=70.", limit_pages=40,
+    scrape_board("https://geekhack.org/index.php?board=70.", page_limit=40,
                  request_interval=15, filepath=raw_filepath)
     clean_board_data(in_filepath=raw_filepath, out_filepath=clean_filepath)
 
 if input("scrape interest check forum? (Y/N): ").upper() == "Y":
     raw_filepath = base_filepath + "ic_raw.csv"
     clean_filepath = base_filepath + "ic_clean.csv"
-    scrape_board("https://geekhack.org/index.php?board=132.", limit_pages=65,
+    scrape_board("https://geekhack.org/index.php?board=132.", page_limit=65,
                  request_interval=15, filepath=raw_filepath)
     clean_board_data(in_filepath=raw_filepath, out_filepath=clean_filepath)
 
@@ -32,5 +32,5 @@ if input("scrape groupbuy topics? (Y/N): ").upper() == "Y":
         topic_ids = [row['topic_id'] for row in topic_reader]
 
     topic_path = base_filepath + "td.csv"
-    scrape_topics("geekhack.org", topic_ids, limit_topics=num_topics, offset=offset, filepath=topic_path,
-                  postdir="data/post_data")
+    scrape_topics("geekhack.org", topic_ids, topic_limit=num_topics, offset=offset, filepath=topic_path,
+                  post_dir="data/post_data")

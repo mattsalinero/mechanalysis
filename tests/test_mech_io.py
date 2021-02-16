@@ -165,10 +165,10 @@ class TestInsertBoardClean(TestCase):
 
         test_data = [{'topic_id': "111111", 'product_type': "keycaps", 'thread_type': None,
                       'info_codes': ["TC1", "TC2"], 'set_name': None, 'creator': None, 'creator_id': None,
-                      'views': 111, 'replies': None, 'board': None, 'access_date': None, 'title': None},
+                      'views': 111, 'replies': None, 'board': None, 'board_accessed': None, 'title': None},
                      {'topic_id': "222222", 'product_type': "keycaps", 'thread_type': None,
                       'info_codes': None, 'set_name': None, 'creator': None, 'creator_id': None,
-                      'views': 222, 'replies': None, 'board': None, 'access_date': None, 'title': None}
+                      'views': 222, 'replies': None, 'board': None, 'board_accessed': None, 'title': None}
                      ]
         db_insert_board_clean(test_data, db=self.test_db)
 
@@ -191,7 +191,7 @@ class TestInsertBoardClean(TestCase):
     def test_db_insert_board_clean_single(self):
         test_data = {'topic_id': "111111", 'product_type': "keycaps", 'thread_type': None,
                      'info_codes': ["TC1", "TC2"], 'set_name': None, 'creator': None, 'creator_id': None,
-                     'views': 111, 'replies': None, 'board': None, 'access_date': None, 'title': None}
+                     'views': 111, 'replies': None, 'board': None, 'board_accessed': None, 'title': None}
         db_insert_board_clean(test_data, db=self.test_db)
 
         conn = sqlite3.connect(self.test_db)

@@ -10,7 +10,7 @@ from lark import Lark
 
 def clean_board_data(in_data=None, in_filepath=None, out_filepath=None, out_db=None):
     """
-    Cleans scraped data from board index page into more readable format, supports reading from and saving to files
+    Processes raw data scraped from board index page
     :param in_data: list[dict] each element is extracted data for one topic on board index page
      (priority over in_filepath)
     :param in_filepath: filepath to csv equivalent of in_data
@@ -39,12 +39,12 @@ def clean_board_data(in_data=None, in_filepath=None, out_filepath=None, out_db=N
     if out_filepath:
         # save data to csv - note this does not include an index field other than topic id
         fields = ['topic_id', 'product_type', 'thread_type', 'info_codes', 'set_name', 'creator', 'creator_id', 'views',
-                  'replies', 'board', 'access_date', 'title']
+                  'replies', 'board', 'board_accessed', 'title']
         mech_io.write_csv(out_data, out_filepath, fields)
 
         print(f"Saved to {out_filepath}")
 
-    # TODO: update unit test to test saving to database
+    # TODO: update unit test to include saving to database
     if out_db:
         mech_io.db_insert_board_clean(out_data, out_db)
         print(f"Added to {out_db}")
@@ -74,11 +74,10 @@ def parse_board_data(input_topics):
 
 def parse_title(input_title, title_parser):
     """
-    Parses topic title to determine product type (keycap or unknown), thread_type (group buy, interest check),
-    info codes (GMK, SA, etc.), and the name of the set (if applicable)
-    :param input_title: str title to parse
+    Parses topic title to derive relevant information (notably set name)
+    :param input_title: string of title to parse
     :param title_parser: LARK parser used to interpret title
-    :return: dict containing product_type, thread_type, info_codes, set_name (all default to None)
+    :return: dict containing extracted data (values set to None if unparseable)
     """
     if not input_title:
         raise ValueError("invalid/empty input title")
@@ -106,12 +105,12 @@ def parse_title(input_title, title_parser):
 
 def parse_basic(input_topic):
     """
-    Parses basic data from topic information available in board index. Does not do complex parsing on title
+    Parses basic data from topic information available in board index (excluding title information)
     :param input_topic: dict containing extracted data for one topic
-    :return: dict containing topic id, creator (name), creator id, views, replies, board, access date, and raw title
+    :return: dict containing extracted data (values set to None if unparseable)
     """
     basic_data = {'topic_id': None, 'creator': None, 'creator_id': None, 'views': None, 'replies': None, 'board': None,
-                  'access_date': None, 'title': None}
+                  'board_accessed': None, 'title': None}
 
     # parse for topic id
     if 'topic_link' in input_topic and input_topic['topic_link']:
@@ -136,8 +135,8 @@ def parse_basic(input_topic):
         basic_data['board'] = input_topic['url'].split("board=")[-1].split('.')[0]
 
     # parse for access data and title
-    if 'accessed' in input_topic and input_topic['accessed']:
-        basic_data['access_date'] = input_topic['accessed']
+    if 'board_accessed' in input_topic and input_topic['board_accessed']:
+        basic_data['board_accessed'] = input_topic['board_accessed']
     if 'title' in input_topic and input_topic['title']:
         basic_data['title'] = input_topic['title']
 

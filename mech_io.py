@@ -7,7 +7,16 @@ import json
 
 
 def write_csv(data, filepath, fields, overwrite=False):
+    """
+    Writes given dict of data to .csv
+    :param data: dict of data
+    :param filepath: filepath to save to
+    :param fields: list giving schema of data
+    :param overwrite:
+    :return: none
+    """
     # TODO: implement a check if this file exists already, use overwrite param to control if it overwrites
+    # TODO: replace fields with param data.keys() because they should be equivalent now (and less maintenance)
     if type(data) not in [list, dict]:
         raise ValueError("input should be a list or a list of dicts to write")
 
@@ -23,6 +32,14 @@ def write_csv(data, filepath, fields, overwrite=False):
 
 
 def append_csv(data, filepath, fields, overwrite=False):
+    """
+    Appends given dict of data to .csv
+    :param data: dict of data
+    :param filepath: filepath to save to
+    :param fields: list of fieldnames giving schema of data
+    :param overwrite:
+    :return: none
+    """
     # TODO: implement a check if this file exists already, use overwrite param to control if it overwrites
     if type(data) not in [list, dict]:
         raise ValueError("input should be a list or a list of dicts to write")
@@ -38,13 +55,21 @@ def append_csv(data, filepath, fields, overwrite=False):
 
 
 def prepare_appending_csv(filepath, fields):
+    """
+    Verifies file to append to is correctly formatted (or creates file)
+    :param filepath: filepath of file to check
+    :param fields: list of fieldnames giving schema of data
+    :return: True if successful (mostly redundant)
+    """
     if os.path.isfile(filepath):
+        # checks if already existing file has the correct format
         with open(filepath, 'r', encoding="utf-8", newline='') as prep_csv:
             prep_reader = csv.DictReader(prep_csv)
             if prep_reader.fieldnames != fields:
                 raise ValueError("unexpected fields found in file at filepath")
             return True
     else:
+        # sets up new file
         with open(filepath, 'w', encoding="utf-8", newline='') as prep_csv:
             prep_writer = csv.DictWriter(prep_csv, fieldnames=fields)
             prep_writer.writeheader()
@@ -52,6 +77,11 @@ def prepare_appending_csv(filepath, fields):
 
 
 def read_csv(filepath):
+    """
+    Reads .csv at filepath to list of dicts
+    :param filepath: filepath of file to read
+    :return: list[dict] of data in .csv
+    """
     with open(filepath, 'r', encoding="utf-8", newline='') as in_csv:
         in_reader = csv.DictReader(in_csv)
         read_data = [csv_row for csv_row in in_reader]
@@ -60,6 +90,13 @@ def read_csv(filepath):
 
 
 def gen_csvpath(suffix, folder=None, date=None):
+    """
+    Generates appropriate filename/path for .csv based on date
+    :param suffix: suffix of filename in addition to date
+    :param folder: Path object to folder of tile
+    :param date: date (default is today's date)
+    :return: Path object to file
+    """
     if not folder:
         folder = Path(__file__).parent / "data"
     if not date:
@@ -71,6 +108,13 @@ def gen_csvpath(suffix, folder=None, date=None):
 
 
 def write_post_json(topic_id, data, folder=None):
+    """
+    Writes given data to individual .json file
+    :param topic_id: topic_id of data (for filename generation)
+    :param data: dict of data to write
+    :param folder: path to folder .json will be saved
+    :return: none
+    """
     if not folder:
         folder = Path(__file__).parent / "data" / "post_data"
 
@@ -85,6 +129,12 @@ def write_post_json(topic_id, data, folder=None):
 
 
 def db_setup(db, overwrite=False):
+    """
+    Sets up SQLite database based on given schema
+    :param db: filepath to desired location of database
+    :param overwrite:
+    :return: none
+    """
     # TODO: implement unit test for this
     if os.path.isfile(db):
         if overwrite:
@@ -93,7 +143,8 @@ def db_setup(db, overwrite=False):
             raise FileExistsError("db file already exists")
 
     table_sqls = {}
-    table_sqls['topic_data'] = """CREATE TABLE topic_data (
+    table_sqls['topic_data'] = """
+        CREATE TABLE topic_data (
         topic_id VARCHAR PRIMARY KEY,
         topic_created VARCHAR,
         product_type VARCHAR,
@@ -108,18 +159,21 @@ def db_setup(db, overwrite=False):
         board_accessed VARCHAR,
         title VARCHAR); 
         """
-    table_sqls['topic_icode'] = """CREATE TABLE topic_icode (
+    table_sqls['topic_icode'] = """
+        CREATE TABLE topic_icode (
         topic_id VARCHAR NOT NULL,
         info_code VARCHAR NOT NULL,
         PRIMARY KEY (topic_id, info_code),
         FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id));
         """
-    # table_sqls['topic_link'] = """CREATE TABLE page_link (
+    # table_sqls['topic_link'] = """
+    #     CREATE TABLE page_link (
     #     id INTEGER PRIMARY KEY,
     #     topic_id VARCHAR NOT NULL,
     #     link VARCHAR NOT NULL);
     #     """
-    # table_sqls['topic_image'] = """CREATE TABLE page_image (
+    # table_sqls['topic_image'] = """
+    #     CREATE TABLE page_image (
     #     id INTEGER PRIMARY KEY,
     #     topic_id VARCHAR NOT NULL,
     #     image_source VARCHAR NOT NULL);
@@ -137,6 +191,7 @@ def db_setup(db, overwrite=False):
 
 
 def _db_check_exists(db, setup=False):
+    # checks if given database exists
     # TODO: unit test?
     if os.path.exists(db):
         return True
@@ -148,6 +203,13 @@ def _db_check_exists(db, setup=False):
 
 
 def db_insert_board_clean(data, db=None, new_db=True):
+    """
+    Inserts given board data into database
+    :param data: list[dict] or [dict] of data to insert
+    :param db: path to database
+    :param new_db: is this going into a new database?
+    :return: none
+    """
     if not db:
         db = Path(__file__).parent / "data" / "database" / "mech_db"
 
@@ -155,7 +217,7 @@ def db_insert_board_clean(data, db=None, new_db=True):
 
     if type(data) == dict:
         values = [data]
-    elif type(data) == list:
+    elif type(data) == list and type(data[0]) == dict:
         values = data
     else:
         raise ValueError("data should be dict or list of dicts with keys corresponding to table schema")
@@ -169,7 +231,7 @@ def db_insert_board_clean(data, db=None, new_db=True):
     topic_data_query = """INSERT INTO topic_data (topic_id, product_type, thread_type, set_name, creator, creator_id, 
                                         views, replies, board, board_accessed, title)
                 VALUES (:topic_id, :product_type, :thread_type, :set_name, :creator, :creator_id, :views,
-                  :replies, :board, :access_date, :title);
+                  :replies, :board, :board_accessed, :title);
                 """
     topic_icode_query = """INSERT OR REPLACE INTO topic_icode (topic_id, info_code)
                 VALUES (:topic_id, :info_code);
@@ -187,7 +249,12 @@ def db_insert_board_clean(data, db=None, new_db=True):
 
 
 def db_insert_topic_clean(data, db=None):
-    # TODO: fix "accessed" vs "topic_accessed" in schema
+    """
+    Inserts topic data into database
+    :param data: list[dict] or [dict] of data to insert
+    :param db: path to database
+    :return: none
+    """
     # TODO: implement unit test
 
     if not db:
@@ -197,7 +264,7 @@ def db_insert_topic_clean(data, db=None):
 
     if type(data) == dict:
         values = [data]
-    elif type(data) == list:
+    elif type(data) == list and type(data[0]) == dict:
         values = data
     else:
         raise ValueError("data should be dict or list of dicts with keys corresponding to table schema")
@@ -205,7 +272,7 @@ def db_insert_topic_clean(data, db=None):
     topic_data_query = """
         UPDATE topic_data
         SET topic_created = :topic_created,
-            topic_accessed = :accessed
+            topic_accessed = :topic_accessed
         WHERE topic_id = :topic_id;"""
 
     conn = sqlite3.connect(db)
@@ -219,6 +286,14 @@ def db_insert_topic_clean(data, db=None):
 
 
 def db_query_keycap_topics(db=None, board=None, select_restriction=None):
+    """
+    Searches database to determine list of keycap topics
+    :param db: path to database
+    :param board: (optional) board to restrict search
+    :param select_restriction: (optional) "new" if only want new topics
+    :return: list of relevant topic_ids
+    """
+    # TODO: rename select_restriction to something more descriptive
     if not db:
         db = Path(__file__).parent / "data" / "database" / "mech_db"
 

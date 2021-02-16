@@ -10,25 +10,23 @@ import bs4
 from bs4 import BeautifulSoup
 
 
-def scrape_board(forum_url, board, limit_pages=10, limit_date=None, request_interval=10, filepath=None,
-                 sort='firstpost'):
+def scrape_board(forum_url, board, page_limit=10, date_limit=None, request_interval=10, filepath=None,
+                 sort='first_post'):
     """
-    Function to scrape topic data from a specified forum board (formatted like GeekHack). Will return the scraped data
-    and save to a file the filepath parameter is set.
-
-    :param forum_url: string of url in the format "https://geekhack.org/index.php?board=70."
+    Scrapes topic data from a specified forum board (formatted like GeekHack)
+    :param forum_url: string of url in the format "geekhack.org"
                     - function will append integers to the end to get subsequent pages
-    :param board:
-    :param limit_pages: int max pages of board to scrape
-    :param limit_date: date object of date to scrape to (may overrun by 1 page)
+    :param board: string of board identifier ("70" for group buy)
+    :param page_limit: int max pages of board to scrape
+    :param date_limit: date object of date to scrape to (may overrun by 1 page)
     :param request_interval: int how long on average to wait between requests (randomized)
     :param filepath: if set, will write to specified .csv
-    :param sort: 'firstpost', 'lastpost', 'default' supported sorts for request
+    :param sort: 'first_post', 'last_post', 'default' supported sorts for request
     :return: list of dicts containing scraped data
     """
     # TODO: implement restriction on input values for sort variable
     base_url = "https://" + forum_url + "/index.php?board=" + board + "."
-    sorts = {'firstpost': ";sort=first_post;desc", 'lastpost': ";sort=last_post;desc", 'default': ""}
+    sorts = {'first_post': ";sort=first_post;desc", 'last_post': ";sort=last_post;desc", 'default': ""}
     sort_url = sorts[sort]
 
     session = requests.Session()
@@ -36,7 +34,7 @@ def scrape_board(forum_url, board, limit_pages=10, limit_date=None, request_inte
     first_page = session.get(base_url, timeout=5)
     expected_topics = _board_topic_count(BeautifulSoup(first_page.content, 'html5lib'))
     scraped_board = []
-    for x in range(limit_pages):
+    for x in range(page_limit):
         current_url = base_url + str(x * expected_topics) + sort_url
 
         # access current url for page to scrape
@@ -60,19 +58,20 @@ def scrape_board(forum_url, board, limit_pages=10, limit_date=None, request_inte
             print("End of board reached")
             break
 
-        if limit_date:
-            if current_data[-1]['last_post'].date() < limit_date:
+        if date_limit:
+            if current_data[-1]['last_post'].date() < date_limit:
                 # break if date limit reached
                 print("Date limit reached")
                 break
 
         # wait to keep request rate low
-        if x != (limit_pages - 1):
+        if x != (page_limit - 1):
             time.sleep(random.randint(request_interval // 2, request_interval * 2))
 
     # save to file if appropriate
     if filepath:
-        fields = ['title', 'topic_link', 'creator', 'creator_link', 'replies', 'views', 'last_post', 'url', 'accessed']
+        fields = ['title', 'topic_link', 'creator', 'creator_link', 'replies', 'views', 'last_post', 'url',
+                  'board_accessed']
         mech_io.write_csv(scraped_board, filepath, fields)
 
     print(f"Scraping complete: {len(scraped_board)} topics found")
@@ -81,18 +80,21 @@ def scrape_board(forum_url, board, limit_pages=10, limit_date=None, request_inte
 
 def scrape_page(page_soup, page_url='unknown'):
     """
-    Internal function to extract topic data out of a single page of a board index
-    :param page_soup:
-    :param page_url:
-    :return:
+    Extracts topic data out of a single page of a board index
+    :param page_soup: BeautifulSoup soup of page
+    :param page_url: url entry was scraped from (optional)
+    :return: entry data as list of dicts
     """
     # TODO: rename this to scrape_entry() or something
     scraped_page = []
     topics = page_soup.find('div', class_="tborder topic_table").table.tbody
     for topic in topics.find_all('td', class_=["subject windowbg2", "subject lockedbg2"]):
         scrape = {}
+
         scrape['title'] = topic.span.a.string
         scrape['topic_link'] = topic.span.a['href']
+
+        # if a user is banned they don't have a corresponding link
         if topic.p.find('a', recursive=False):
             scrape['creator'] = topic.p.a.string
             scrape['creator_link'] = topic.p.a['href']
@@ -108,7 +110,7 @@ def scrape_page(page_soup, page_url='unknown'):
         scrape['last_post'] = datetime.datetime.strptime(next(lastpost), "%a, %d %B %Y, %H:%M:%S")
 
         scrape['url'] = page_url
-        scrape['accessed'] = datetime.datetime.now().replace(microsecond=0)
+        scrape['board_accessed'] = datetime.datetime.now().replace(microsecond=0)
 
         scraped_page.append(scrape)
 
@@ -116,26 +118,40 @@ def scrape_page(page_soup, page_url='unknown'):
 
 
 def _board_topic_count(soup):
+    # finds the number of topics on given board index page
     topic_count = len(soup.find('div', class_="tborder topic_table").tbody
                       .find_all('tr', class_=None))
     return topic_count
 
 
-def scrape_topics(forum_url, topic_ids, limit_topics=None, offset=0, limit_date=None, request_interval=10,
-                  filepath=None, postdir=None):
+def scrape_topics(forum_url, topic_ids, topic_limit=None, offset=0, date_limit=None, request_interval=10,
+                  filepath=None, post_dir=None):
+    """
+    Scrapes data from a specified topic page of a forum (formatted like GeekHack)
+    :param forum_url: string of url in the format "geekhack.org"
+    :param topic_ids: list of topic ids for desired pages
+    :param topic_limit: (optional) maximum number of topics to scrape
+    :param offset:
+    :param date_limit:
+    :param request_interval:
+    :param filepath:
+    :param post_dir:
+    :return:
+    """
     # TODO: rework this function to actually return the full data/not aggregate to csv -> when using primarily the
     #  db, having the truncated version isn't useful
-    if limit_topics and len(topic_ids) > limit_topics:
+    # TODO: get rid of offset and put that functionality in the calling method
+    if topic_limit and len(topic_ids) > topic_limit:
         if offset > len(topic_ids):
             print(f"offset of {offset} larger than {len(topic_ids)} provided topics")
             return
-        topic_ids = topic_ids[offset:(limit_topics + offset)]
+        topic_ids = topic_ids[offset:(topic_limit + offset)]
     else:
         topic_ids = topic_ids[:]
 
     topic_ids = [str(topic_id) for topic_id in topic_ids]
 
-    fields = ['topic_id', 'topic_created', 'accessed']
+    fields = ['topic_id', 'topic_created', 'topic_accessed']
     if filepath:
         mech_io.prepare_appending_csv(filepath, fields)
 
@@ -154,13 +170,13 @@ def scrape_topics(forum_url, topic_ids, limit_topics=None, offset=0, limit_date=
         current_data = scrape_topic(soup, topic_id)
         current_data_short = dict(topic_id=current_data['topic_id'],
                                   topic_created=current_data['topic_created'],
-                                  accessed=current_data['accessed'])
+                                  topic_accessed=current_data['topic_accessed'])
         topic_data.append(current_data_short)
 
-        if postdir:
+        if post_dir:
             # TODO: implement default postdir using pathlib
             # TODO: rework arguments to have separate arguments for using a method to save and the place to save
-            mech_io.write_post_json(topic_id, current_data, folder=postdir)
+            mech_io.write_post_json(topic_id, current_data, folder=post_dir)
 
         if filepath:
             # TODO: implement default filepath using pathlib
@@ -183,8 +199,8 @@ def scrape_topics(forum_url, topic_ids, limit_topics=None, offset=0, limit_date=
 
 def scrape_topic(topic_soup, topic_id='unknown'):
     """
-    Internal function to extract information from a single topic page
-    :param topic_soup:
+    Extracts information from a single topic page
+    :param topic_soup: BeautifulSoup soup of topic page
     :param topic_id: topic id to associate with extracted data
     :return: dict of extracted topic data
     """
@@ -216,12 +232,17 @@ def scrape_topic(topic_soup, topic_id='unknown'):
 
     print(f"  topic contains: {len(scraped_topic['post_data'])} posts")
 
-    scraped_topic['accessed'] = datetime.datetime.now().replace(microsecond=0)
+    scraped_topic['topic_accessed'] = datetime.datetime.now().replace(microsecond=0)
 
     return scraped_topic
 
 
 def scrape_post(post):
+    """
+    Extracts information from a post within a topic page
+    :param post: BeautifulSoup soup of post
+    :return: dict of extracted post data
+    """
     scraped_post = {}
 
     post_date = post.find('div', class_="keyinfo").find('div', class_="smalltext").stripped_strings
@@ -233,8 +254,8 @@ def scrape_post(post):
     else:
         scraped_post['poster_id'] = None
 
-    # grabs post content for selected post (recursively)
     def quoteless_content(source):
+        # grabs post content for selected post (recursively), excluding quoted text of earlier posts
         content = []
         for child in source.children:
             if isinstance(child, bs4.element.NavigableString):
