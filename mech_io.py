@@ -117,8 +117,7 @@ def write_post_json(topic_id, data, folder=None):
     """
     if not folder:
         folder = Path(__file__).parent / "data" / "post_data"
-
-    filename = "topic" + topic_id + "_postdata.json"
+    filename = "topic" + topic_id + "_post_data.json"
     json_filepath = folder / filename
 
     json_data = json.dumps(data, indent=4, default=(lambda x: x.__str__()))
@@ -126,6 +125,30 @@ def write_post_json(topic_id, data, folder=None):
         json_file.write(json_data)
 
     return
+
+
+def read_post_json(topic_id=None, folder=None, filepath=None):
+    """
+    Reads individual post data from .json file based on topic_id
+    :param topic_id: topic_id of data (for filename generation)
+    :param folder: path to folder .json will be saved
+    :param filepath: full filepath (priority over generated filepath)
+    :return: dict of data from .json
+    """
+    if filepath:
+        json_filepath = filepath
+    elif topic_id:
+        if not folder:
+            folder = Path(__file__).parent / "data" / "post_data"
+        filename = "topic" + topic_id + "_post_data.json"
+        json_filepath = folder / filename
+    else:
+        raise ValueError("no file specified")
+
+    with open(json_filepath, 'r') as json_file:
+        json_data = json.load(json_file)
+
+    return json_data
 
 
 def db_setup(db, overwrite=False):
@@ -255,7 +278,7 @@ def db_insert_topic_clean(data, db=None):
     :param db: path to database
     :return: none
     """
-    # TODO: implement unit test
+    # TODO: implement unit test and expand to include new statistics
 
     if not db:
         db = Path(__file__).parent / "data" / "database" / "mech_db"

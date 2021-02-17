@@ -96,23 +96,20 @@ Schema
 		PRIMARY KEY (topic_id, info_code),
 		FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id)
 
+	(FUTURE) topic_advanced
+		topic_id VARCHAR PRIMARY KEY,
+		num_posts INTEGER,
+		num_posters INTEGER,
+		num_creator_posts INTEGER,
+		percent_creator_posts FLOAT,
+		post_25_delta VARCHAR,
+		post_50_delta VARCHAR,
+		FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id)
+
 	(FUTURE) topic_link
 		id INTEGER PRIMARY KEY,
 		topic_id VARCHAR NOT NULL,
 		link VARCHAR NOT NULL,
-		FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id)
-
-	(FUTURE) topic_image
-		id INTEGER PRIMARY KEY,
-		topic_id VARCHAR NOT NULL,
-		image_source VARCHAR NOT NULL,
-		FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id)
-
-	(FUTURE) topic_advanced
-		topic_id VARCHAR PRIMARY KEY,
-		num_nonimage_links INTEGER,
-		num_creator_posts INTEGER,
-		percent_creator_posts FLOAT,
 		FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id)
 
 

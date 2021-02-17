@@ -125,7 +125,7 @@ class TestReadCsv(TestCase):
 class TestWritePostJson(TestCase):
     def test_write_post_json(self):
         test_folder = Path(__file__).parent / "fixtures"
-        test_filepath = test_folder / "topic_test_postdata.json"
+        test_filepath = test_folder / "topic_test_post_data.json"
         test_data = {"test_col1": "test_val", "test_col2": ["test_val1", "test_val2"]}
 
         write_post_json("_test", test_data, test_folder)
@@ -135,6 +135,17 @@ class TestWritePostJson(TestCase):
 
         self.assertEqual(test_data, result_data)
         os.remove(test_filepath)
+
+
+class TestReadPostJson(TestCase):
+    def test_read_post_json(self):
+        test_folder = Path(__file__).parent / "fixtures"
+        test_filepath = test_folder / "test_post_data.json"
+
+        result_data = read_post_json(filepath=test_filepath)
+
+        self.assertEqual("110579", result_data['topic_id'])
+        self.assertEqual("80815", result_data['post_data'][2]['poster_id'])
 
 
 class TestDBSetup(TestCase):

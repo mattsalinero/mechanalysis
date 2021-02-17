@@ -141,3 +141,61 @@ def parse_basic(input_topic):
         basic_data['title'] = input_topic['title']
 
     return basic_data
+
+
+def clean_topic_data(in_topics=None, in_folder=None, in_filepaths=None, out_filepath=None, out_db=None):
+    # TODO: update insert functions and schema to handle new stats
+    # TODO: unit test
+    for topic in in_topics:
+        topic_data = mech_io.read_post_json(topic, in_folder)
+
+
+
+    pass
+
+
+def _find_links(raw_links, raw_images):
+    out_links = []
+    for link in raw_links:
+        if link in raw_images:
+            continue
+        else:
+            out_links.append(link)
+    return out_links
+
+
+def find_post_stats(post_data):
+    # TODO: docstring
+    # TODO: unit test
+    num_posts = len(post_data)
+
+    # calculate stats about post creator
+    creator_id = post_data[0]['poster_id']
+    num_creator_posts = 0
+    for post in post_data:
+        if post['poster_id'] == creator_id:
+            num_creator_posts += 1
+
+    percent_creator_posts = num_creator_posts/num_posts
+
+    num_posters = len({post['poster_id'] for post in post_data})
+
+    # calculate stats for reaching certain post milestones
+    topic_created_date = datetime.datetime.fromisoformat(post_data[0]['post_date'])
+    post_25_delta = None
+    post_50_delta = None
+    if len(post_data) >= 25:
+        post_25_date = datetime.datetime.fromisoformat(post_data[24]['post_date'])
+        post_25_delta = post_25_date - topic_created_date
+    if len(post_data) >= 50:
+        post_50_date = datetime.datetime.fromisoformat(post_data[49]['post_date'])
+        post_50_delta = post_50_date - topic_created_date
+
+    post_stats = {'num_posts': num_posts,
+                  'num_posters': num_posters,
+                  'num_creator_posts': num_creator_posts,
+                  'percent_creator_posts': percent_creator_posts,
+                  'post_25_delta': str(post_25_delta),
+                  'post_50_delta': str(post_50_delta)}
+
+    return post_stats
