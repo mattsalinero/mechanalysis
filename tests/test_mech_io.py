@@ -157,7 +157,7 @@ class TestDBSetup(TestCase):
         conn = sqlite3.connect(test_setup)
         tables = conn.execute("""SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'""")
         table_list = tables.fetchall()
-        self.assertEqual(2, len(table_list))
+        self.assertEqual(4, len(table_list))
         conn.close()
         os.remove(test_setup)
 
@@ -173,6 +173,7 @@ class TestInsertBoardClean(TestCase):
     def test_db_insert_board_clean(self):
         # TODO: redo this unit test to not rely on constantly remaking db/figure out how to actually delete if crash
         # TODO: there is a potential problem with inserting the datetime objects - use iso format strings instead
+        # TODO: update to cover inserting infocodes as well
 
         test_data = [{'topic_id': "111111", 'product_type': "keycaps", 'thread_type': None,
                       'info_codes': ["TC1", "TC2"], 'set_name': None, 'creator': None, 'creator_id': None,
@@ -229,15 +230,20 @@ class TestInsertTopicClean(TestCase):
         os.remove(self.test_db)
 
     def test_db_insert_topic_clean(self):
-        test_data = read_csv(Path(__file__).parent / "fixtures" / "test_topic_data.csv")
+        test_data = read_post_json(filepath=Path(__file__).parent / "fixtures" / "test_topic_data.json")
         db_insert_topic_clean(test_data, self.test_db)
 
         conn = sqlite3.connect(self.test_db)
         conn.row_factory = sqlite3.Row
-        result_data = conn.execute("""SELECT * FROM topic_data WHERE topic_id = '110579'""").fetchall()
+        result_data = conn.execute("""SELECT * FROM topic_advanced WHERE topic_id = '110579'""").fetchall()
+        result_links = conn.execute("""SELECT * FROM topic_link WHERE topic_id = '110579'""").fetchall()
         conn.close()
         self.assertEqual("2021-01-01 00:01:00", result_data[0]['topic_created'])
+        self.assertEqual(0.5, result_data[0]['percent_creator_posts'])
+        self.assertEqual("10:00:00", result_data[0]['post_25_delta'])
         self.assertEqual("2021-01-21 23:06:50", result_data[0]['topic_accessed'])
+        self.assertEqual(3, len(result_links))
+        self.assertEqual("test_link_1", result_links[0]['link'])
 
 
 class TestQueryKeycapTopics(TestCase):

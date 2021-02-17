@@ -1,0 +1,16 @@
+{
+	"topic_id": "110579",
+	"topic_created": "2021-01-01 00:01:00",
+	"num_posts": 25,
+	"num_posters": 10,
+	"num_creator_posts": 15,
+	"percent_creator_posts": 0.5,
+	"post_25_delta": "10:00:00",
+	"post_50_delta": "10 days, 10:00:00",
+	"post_links": [
+		"test_link_1",
+		"test_link_2",
+		"test_link_3"
+	],
+	"topic_accessed": "2021-01-21 23:06:50"	
+}

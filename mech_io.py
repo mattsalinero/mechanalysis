@@ -169,7 +169,6 @@ def db_setup(db, overwrite=False):
     table_sqls['topic_data'] = """
         CREATE TABLE topic_data (
         topic_id VARCHAR PRIMARY KEY,
-        topic_created VARCHAR,
         product_type VARCHAR,
         thread_type VARCHAR,
         set_name VARCHAR,
@@ -178,7 +177,6 @@ def db_setup(db, overwrite=False):
         views INTEGER,
         replies INTEGER,
         board VARCHAR,
-        topic_accessed VARCHAR,
         board_accessed VARCHAR,
         title VARCHAR); 
         """
@@ -189,18 +187,26 @@ def db_setup(db, overwrite=False):
         PRIMARY KEY (topic_id, info_code),
         FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id));
         """
-    # table_sqls['topic_link'] = """
-    #     CREATE TABLE page_link (
-    #     id INTEGER PRIMARY KEY,
-    #     topic_id VARCHAR NOT NULL,
-    #     link VARCHAR NOT NULL);
-    #     """
-    # table_sqls['topic_image'] = """
-    #     CREATE TABLE page_image (
-    #     id INTEGER PRIMARY KEY,
-    #     topic_id VARCHAR NOT NULL,
-    #     image_source VARCHAR NOT NULL);
-    #     """
+    table_sqls['topic_advanced'] = """
+        CREATE TABLE topic_advanced (
+        topic_id VARCHAR PRIMARY KEY,
+        topic_created VARCHAR,
+        num_posts INTEGER,
+        num_posters INTEGER,
+        num_creator_posts INTEGER,
+        percent_creator_posts FLOAT,
+        post_25_delta VARCHAR,
+        post_50_delta VARCHAR,
+        topic_accessed VARCHAR,
+        FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id));
+        """
+    table_sqls['topic_link'] = """
+        CREATE TABLE topic_link (
+        id INTEGER PRIMARY KEY,
+        topic_id VARCHAR NOT NULL,
+        link VARCHAR NOT NULL,
+        FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id));
+        """
 
     conn = sqlite3.connect(db)
     c = conn.cursor()
@@ -292,15 +298,27 @@ def db_insert_topic_clean(data, db=None):
     else:
         raise ValueError("data should be dict or list of dicts with keys corresponding to table schema")
 
-    topic_data_query = """
-        UPDATE topic_data
-        SET topic_created = :topic_created,
-            topic_accessed = :topic_accessed
-        WHERE topic_id = :topic_id;"""
+    post_links = []
+    for entry in values:
+        if entry['post_links']:
+            for link in entry['post_links']:
+                post_links.append({'topic_id': entry['topic_id'], 'link': link})
+
+    topic_advanced_query = """
+        INSERT INTO topic_advanced (topic_id, topic_created, num_posts, num_posters, num_creator_posts,
+            percent_creator_posts, post_25_delta, post_50_delta, topic_accessed) 
+        VALUES (:topic_id, :topic_created, :num_posts, :num_posters, :num_creator_posts,
+            :percent_creator_posts, :post_25_delta, :post_50_delta, :topic_accessed);
+        """
+
+    topic_link_query = """INSERT OR REPLACE INTO topic_link (topic_id, link)
+                VALUES (:topic_id, :link);
+                """
 
     conn = sqlite3.connect(db)
 
-    conn.executemany(topic_data_query, values)
+    conn.executemany(topic_advanced_query, values)
+    conn.executemany(topic_link_query, post_links)
 
     conn.commit()
     conn.close()
@@ -323,19 +341,20 @@ def db_query_keycap_topics(db=None, board=None, select_restriction=None):
     values = {}
     board_condition = ""
     if board:
-        board_condition = "AND board = :board"
+        board_condition = "AND topic_data.board = :board"
         values['board'] = board
 
     extra_condition = ""
     if select_restriction:
         if select_restriction == "new":
-            extra_condition = "AND topic_accessed IS NULL"
+            extra_condition = "AND topic_advanced.topic_accessed IS NULL"
         else:
             raise ValueError("available select types are None and 'new'")
 
-    keycap_topic_query = f"""SELECT topic_id
-                          FROM topic_data
-                          WHERE product_type = 'keycaps' {board_condition} {extra_condition};
+    keycap_topic_query = f"""SELECT topic_data.topic_id
+                          FROM topic_data LEFT JOIN topic_advanced
+                            ON topic_data.topic_id = topic_advanced.topic_id
+                          WHERE topic_data.product_type = 'keycaps' {board_condition} {extra_condition};
                           """
 
     conn = sqlite3.connect(db)

@@ -154,10 +154,10 @@ def clean_topic_data(in_topics=None, in_folder=None, in_filepaths=None, out_file
     pass
 
 
-def _find_links(raw_links, raw_images):
+def find_post_links(raw_links, raw_images):
     out_links = []
     for link in raw_links:
-        if link in raw_images:
+        if link in raw_images or "action=dlattach" in link:
             continue
         else:
             out_links.append(link)
@@ -166,7 +166,6 @@ def _find_links(raw_links, raw_images):
 
 def find_post_stats(post_data):
     # TODO: docstring
-    # TODO: unit test
     num_posts = len(post_data)
 
     # calculate stats about post creator
@@ -186,16 +185,16 @@ def find_post_stats(post_data):
     post_50_delta = None
     if len(post_data) >= 25:
         post_25_date = datetime.datetime.fromisoformat(post_data[24]['post_date'])
-        post_25_delta = post_25_date - topic_created_date
+        post_25_delta = str(post_25_date - topic_created_date)
     if len(post_data) >= 50:
         post_50_date = datetime.datetime.fromisoformat(post_data[49]['post_date'])
-        post_50_delta = post_50_date - topic_created_date
+        post_50_delta = str(post_50_date - topic_created_date)
 
     post_stats = {'num_posts': num_posts,
                   'num_posters': num_posters,
                   'num_creator_posts': num_creator_posts,
                   'percent_creator_posts': percent_creator_posts,
-                  'post_25_delta': str(post_25_delta),
-                  'post_50_delta': str(post_50_delta)}
+                  'post_25_delta': post_25_delta,
+                  'post_50_delta': post_50_delta}
 
     return post_stats

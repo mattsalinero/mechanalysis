@@ -139,3 +139,30 @@ class TestCleanBoard(TestCase):
         self.assertEqual(10, len(result_data))
         self.assertEqual("110592", result_data[0]['topic_id'])
         os.remove(test_out_file)
+
+
+class TestFindPostStats(TestCase):
+    def setUp(self):
+        test_in_file = Path(__file__).parent / "fixtures" / "test_post_data.json"
+        self.test_post_data = mech_io.read_post_json(filepath=test_in_file)
+
+    def test_find_post_stats(self):
+        post_stats = find_post_stats(self.test_post_data['post_data'])
+
+        self.assertEqual(25, post_stats['num_posts'])
+        self.assertEqual(15, post_stats['num_posters'])
+        self.assertEqual(6, post_stats['num_creator_posts'])
+        self.assertEqual("14 days, 15:42:35", post_stats['post_25_delta'])
+        self.assertTrue(post_stats['post_50_delta'] is None)
+
+
+class TestFindPostLinks(TestCase):
+    def setUp(self):
+        test_in_file = Path(__file__).parent / "fixtures" / "test_post_data.json"
+        self.test_post_data = mech_io.read_post_json(filepath=test_in_file)
+
+    def test_find_post_links(self):
+        post_links = find_post_links(self.test_post_data['fp_links'], self.test_post_data['fp_images'])
+
+        self.assertEqual(8, len(post_links))
+        self.assertTrue("https://mechsandco.com/products/gb-gmk-iconographic" in post_links)
