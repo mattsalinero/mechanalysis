@@ -240,7 +240,7 @@ def db_insert_board_clean(data, db=None, new_db=True):
     :return: none
     """
     if not db:
-        db = Path(__file__).parent / "data" / "database" / "mech_db"
+        db = Path(__file__).parent / "data" / "database" / "mech_db.db"
 
     _db_check_exists(db, setup=new_db)
 
@@ -287,7 +287,7 @@ def db_insert_topic_clean(data, db=None):
     # TODO: implement unit test and expand to include new statistics
 
     if not db:
-        db = Path(__file__).parent / "data" / "database" / "mech_db"
+        db = Path(__file__).parent / "data" / "database" / "mech_db.db"
 
     _db_check_exists(db, setup=False)
 
@@ -336,7 +336,7 @@ def db_query_keycap_topics(db=None, board=None, select_restriction=None):
     """
     # TODO: rename select_restriction to something more descriptive
     if not db:
-        db = Path(__file__).parent / "data" / "database" / "mech_db"
+        db = Path(__file__).parent / "data" / "database" / "mech_db.db"
 
     values = {}
     board_condition = ""

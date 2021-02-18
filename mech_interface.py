@@ -1,36 +1,47 @@
 from mech_scrape import *
 from mech_clean import *
+from mech_io import *
 import datetime
+from pathlib import Path
 
 
-date_code = datetime.datetime.now().strftime("%y%m%d")
-base_filepath = "data/" + date_code
+def main():
+    mech_db = Path(__file__).parent / "data" / "database" / "mech_db.db"
+    page_limit = 3
 
-print("Scraping data for " + date_code)
+    print("scraping data for " + datetime.datetime.today().isoformat())
 
-if input("scrape groupbuy forum? (Y/N): ").upper() == "Y":
-    raw_filepath = base_filepath + "gb_raw.csv"
-    clean_filepath = base_filepath + "gb_clean.csv"
-    scrape_board("https://geekhack.org/index.php?board=70.", page_limit=40,
-                 request_interval=15, filepath=raw_filepath)
-    clean_board_data(in_filepath=raw_filepath, out_filepath=clean_filepath)
+    if input("set up new database? (Y/N): ").upper() == "Y":
+        mech_io.db_setup(mech_db, overwrite=True)
 
-if input("scrape interest check forum? (Y/N): ").upper() == "Y":
-    raw_filepath = base_filepath + "ic_raw.csv"
-    clean_filepath = base_filepath + "ic_clean.csv"
-    scrape_board("https://geekhack.org/index.php?board=132.", page_limit=65,
-                 request_interval=15, filepath=raw_filepath)
-    clean_board_data(in_filepath=raw_filepath, out_filepath=clean_filepath)
+    if input("scrape group buy forum? (Y/N): ").upper() == "Y":
+        gb_raw_filepath = mech_io.gen_csvpath("gb_raw")
+        gb_clean_filepath = mech_io.gen_csvpath("gb_clean")
+        scrape_board("geekhack.org", "70", page_limit=page_limit, request_interval=10, filepath=gb_raw_filepath)
+        clean_board_data(in_filepath=gb_raw_filepath, out_filepath=gb_clean_filepath, out_db=mech_db)
 
-if input("scrape groupbuy topics? (Y/N): ").upper() == "Y":
-    num_topics = int(input("enter number of topics to scrape: "))
-    offset = int(input("enter offset: "))
-    date_code = input("enter datecode of topics to scrape: ")
-    topiclist_path = "data/" + date_code + "topiclist.csv"
-    with open(topiclist_path, 'r', encoding="utf-8", newline='') as csvfile:
-        topic_reader = csv.DictReader(csvfile)
-        topic_ids = [row['topic_id'] for row in topic_reader]
+    if input("scrape interest check forum? (Y/N): ").upper() == "Y":
+        ic_raw_filepath = mech_io.gen_csvpath("ic_raw")
+        ic_clean_filepath = mech_io.gen_csvpath("ic_clean")
+        scrape_board("geekhack.org", "132", page_limit=page_limit, request_interval=10, filepath=ic_raw_filepath)
+        clean_board_data(in_filepath=ic_raw_filepath, out_filepath=ic_clean_filepath, out_db=mech_db)
 
-    topic_path = base_filepath + "td.csv"
-    scrape_topics("geekhack.org", topic_ids, topic_limit=num_topics, offset=offset, filepath=topic_path,
-                  post_dir="data/post_data")
+    if input("scrape groupbuy topics? (Y/N): ").upper() == "Y":
+        post_dir = Path(__file__).parent / "data" / "post_data"
+
+        topic_list = mech_io.db_query_keycap_topics(mech_db, "70")
+        segment_size = 25
+        # split full topic list into segments based on segment_size
+        topic_segments = [topic_list[i:i+segment_size] for i in range(0, len(topic_list), segment_size)]
+
+        for segment in topic_segments:
+            scrape_topics("geekhack.org", segment, topic_limit=25, post_dir=post_dir)
+            time.sleep(30)
+
+        clean_topic_data(topic_list, in_folder=post_dir, out_db=mech_db)
+
+    return
+
+
+if __name__ == '__main__':
+    main()
