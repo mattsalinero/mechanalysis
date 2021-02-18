@@ -1,5 +1,7 @@
 import datetime
 import os
+import sqlite3
+
 from mech_clean import *
 from unittest import TestCase
 
@@ -166,3 +168,29 @@ class TestFindPostLinks(TestCase):
 
         self.assertEqual(8, len(post_links))
         self.assertTrue("https://mechsandco.com/products/gb-gmk-iconographic" in post_links)
+
+
+class TestCleanTopicData(TestCase):
+    def setUp(self):
+        self.test_db = Path(__file__).parent / "fixtures" / "test_db.db"
+        mech_io.db_setup(self.test_db)
+        self.test_in_file = Path(__file__).parent / "fixtures" / "test_post_data.json"
+        self.test_post_data = mech_io.read_post_json(filepath=self.test_in_file)
+
+    def tearDown(self):
+        os.remove(self.test_db)
+
+    def test_clean_topic_data(self):
+        clean_topic_data(in_filepaths=[self.test_in_file], out_db=self.test_db)
+
+        conn = sqlite3.connect(self.test_db)
+        conn.row_factory = sqlite3.Row
+        result_data = conn.execute("""SELECT * FROM topic_advanced WHERE topic_id = '110579'""").fetchall()
+        result_links = conn.execute("""SELECT * FROM topic_link WHERE topic_id = '110579'""").fetchall()
+        conn.close()
+
+        self.assertEqual("2021-01-07 06:17:25", result_data[0]['topic_created'])
+        self.assertEqual("14 days, 15:42:35", result_data[0]['post_25_delta'])
+        self.assertEqual("2021-01-23 09:19:34", result_data[0]['topic_accessed'])
+        self.assertEqual(8, len(result_links))
+        self.assertTrue("https://mechsandco.com/products/gb-gmk-iconographic" in  result_links[0]['link'])

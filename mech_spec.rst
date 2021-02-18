@@ -77,7 +77,6 @@ Schema
 
 	topic_data
 		topic_id VARCHAR PRIMARY KEY, -> topic_id is a number in this case (but stored as a string)
-		topic_created VARCHAR, -> datetime
 		product_type VARCHAR,
 		thread_type VARCHAR,
 		set_name VARCHAR,
@@ -86,7 +85,6 @@ Schema
 		views INTEGER,
 		replies INTEGER,
 		board VARCHAR,
-		topic_accessed VARCHAR, -> datetime
 		board_accessed VARCHAR, -> datetime
 		title VARCHAR
 
@@ -96,17 +94,19 @@ Schema
 		PRIMARY KEY (topic_id, info_code),
 		FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id)
 
-	(FUTURE) topic_advanced
+	topic_advanced
 		topic_id VARCHAR PRIMARY KEY,
+		topic_created VARCHAR, -> datetime
 		num_posts INTEGER,
 		num_posters INTEGER,
 		num_creator_posts INTEGER,
 		percent_creator_posts FLOAT,
 		post_25_delta VARCHAR,
 		post_50_delta VARCHAR,
+		topic_accessed VARCHAR, -> datetime
 		FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id)
 
-	(FUTURE) topic_link
+	topic_link
 		id INTEGER PRIMARY KEY,
 		topic_id VARCHAR NOT NULL,
 		link VARCHAR NOT NULL,

@@ -144,19 +144,55 @@ def parse_basic(input_topic):
 
 
 def clean_topic_data(in_topics=None, in_folder=None, in_filepaths=None, out_filepath=None, out_db=None):
-    # TODO: update insert functions and schema to handle new stats
-    # TODO: unit test
-    for topic in in_topics:
-        topic_data = mech_io.read_post_json(topic, in_folder)
+    """
+    Analyze set of post data .json files to determine statistics from post-level data
+    :param in_topics: list of topic ids with corresponding .jsons
+    :param in_folder: folder where .jsons are located
+    :param in_filepaths: alternative list of full filepaths to post .jsons
+    :param out_filepath: not implemented
+    :param out_db: filepath to database to save processed data
+    :return: processed data as list[dict]
+    """
+    out_data = []
+    if in_topics:
+        for topic in in_topics:
+            topic_data = mech_io.read_post_json(topic, in_folder)
+            clean_data = _assemble_topic_data(topic_data)
+            out_data.append(clean_data)
+    elif in_filepaths:
+        for filepath in in_filepaths:
+            topic_data = mech_io.read_post_json(filepath=filepath)
+            clean_data = _assemble_topic_data(topic_data)
+            out_data.append(clean_data)
+    else:
+        raise ValueError("no valid input provided")
+
+    mech_io.db_insert_topic_clean(out_data, out_db)
+    return out_data
 
 
+def _assemble_topic_data(topic_data):
+    # applies find_post_links() and find_post_stats() to process post-level data
+    clean_data = {'topic_id': topic_data['topic_id'],
+                  'topic_created': topic_data['topic_created'],
+                  'topic_accessed': topic_data['topic_accessed'],
+                  }
+    clean_data.update(find_post_stats(topic_data['post_data']))
+    clean_data['post_links'] = find_post_links(topic_data['fp_links'], topic_data['fp_images'])
 
-    pass
+    return clean_data
 
 
 def find_post_links(raw_links, raw_images):
+    """
+    Analyzes links and images from topic original post
+    :param raw_links: list of links in post
+    :param raw_images: list of image sources in post
+    :return: list of non-image links
+    """
     out_links = []
     for link in raw_links:
+        # rule out links that are just image sources
         if link in raw_images or "action=dlattach" in link:
             continue
         else:
@@ -165,7 +201,11 @@ def find_post_links(raw_links, raw_images):
 
 
 def find_post_stats(post_data):
-    # TODO: docstring
+    """
+    Analyzes post-level data to determine statistics about topic as a whole
+    :param post_data: dict of post data to process
+    :return: dict of processed post data
+    """
     num_posts = len(post_data)
 
     # calculate stats about post creator
@@ -175,7 +215,7 @@ def find_post_stats(post_data):
         if post['poster_id'] == creator_id:
             num_creator_posts += 1
 
-    percent_creator_posts = num_creator_posts/num_posts
+    percent_creator_posts = num_creator_posts / num_posts
 
     num_posters = len({post['poster_id'] for post in post_data})
 
