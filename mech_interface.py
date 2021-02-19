@@ -7,7 +7,8 @@ from pathlib import Path
 
 def main():
     mech_db = Path(__file__).parent / "data" / "database" / "mech_db.db"
-    page_limit = 3
+    page_limit = 70
+    # TODO: Implement a config file of some kind to store filepaths, page_limit settings etc.
 
     print("scraping data for " + datetime.datetime.today().isoformat())
 
@@ -29,16 +30,15 @@ def main():
     if input("scrape groupbuy topics? (Y/N): ").upper() == "Y":
         post_dir = Path(__file__).parent / "data" / "post_data"
 
-        topic_list = mech_io.db_query_keycap_topics(mech_db, "70")
+        topic_list = mech_io.db_query_keycap_topics(mech_db, "70", "new")
         segment_size = 25
         # split full topic list into segments based on segment_size
         topic_segments = [topic_list[i:i+segment_size] for i in range(0, len(topic_list), segment_size)]
 
         for segment in topic_segments:
             scrape_topics("geekhack.org", segment, topic_limit=25, post_dir=post_dir)
+            clean_topic_data(segment, in_folder=post_dir, out_db=mech_db)
             time.sleep(30)
-
-        clean_topic_data(topic_list, in_folder=post_dir, out_db=mech_db)
 
     return
 

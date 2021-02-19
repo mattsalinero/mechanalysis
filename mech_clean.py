@@ -156,7 +156,10 @@ def clean_topic_data(in_topics=None, in_folder=None, in_filepaths=None, out_file
     out_data = []
     if in_topics:
         for topic in in_topics:
-            topic_data = mech_io.read_post_json(topic, in_folder)
+            try:
+                topic_data = mech_io.read_post_json(topic, in_folder)
+            except FileNotFoundError:
+                continue
             clean_data = _assemble_topic_data(topic_data)
             out_data.append(clean_data)
     elif in_filepaths:
