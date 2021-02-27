@@ -365,3 +365,30 @@ def db_query_keycap_topics(db=None, board=None, select_restriction=None):
     conn.close()
 
     return keycap_topic_list
+
+
+def db_query(query, db=None, existing_conn=None):
+    """
+    Executes query
+    :param query: string of SQL query to execute
+    :param db: optional path to SQLite db to query
+    :param existing_conn: optional existing connection to a db
+    :return: query results
+    """
+    # TODO: add unit test for this
+    # TODO: implement a check that this is a select statement only
+    if existing_conn:
+        conn = existing_conn
+    elif db:
+        conn = sqlite3.connect(db)
+    else:
+        raise ValueError("need value for one of db and existing_conn")
+
+    query_result = conn.execute(query).fetchall()
+
+    conn.commit()
+
+    if not existing_conn:
+        conn.close()
+
+    return query_result
