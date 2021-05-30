@@ -37,7 +37,7 @@ class TestParseBasic(TestCase):
         self.assertEqual(testoutput['creator_id'], "123456")
         self.assertEqual(testoutput['views'], 456)
         self.assertEqual(testoutput['replies'], 123)
-        self.assertEqual(testoutput['board'], "70")
+        self.assertEqual(testoutput['board_id'], "70")
         self.assertEqual(testoutput['board_accessed'], datetime.datetime.fromisoformat("2002-02-02 02:02:02"))
         self.assertEqual(testoutput['title'], "test title")
 
@@ -53,7 +53,7 @@ class TestParseBasic(TestCase):
         self.assertEqual(blankoutput['creator_id'], None)
         self.assertEqual(blankoutput['views'], None)
         self.assertEqual(blankoutput['replies'], None)
-        self.assertEqual(blankoutput['board'], None)
+        self.assertEqual(blankoutput['board_id'], None)
         self.assertEqual(blankoutput['board_accessed'], None)
         self.assertEqual(blankoutput['title'], None)
 
@@ -66,7 +66,7 @@ class TestParseBasic(TestCase):
         self.assertEqual(missingoutput['creator_id'], None)
         self.assertEqual(missingoutput['views'], None)
         self.assertEqual(missingoutput['replies'], None)
-        self.assertEqual(missingoutput['board'], None)
+        self.assertEqual(missingoutput['board_id'], None)
         self.assertEqual(missingoutput['board_accessed'], None)
         self.assertEqual(missingoutput['title'], None)
 
@@ -174,6 +174,8 @@ class TestCleanTopicData(TestCase):
     def setUp(self):
         self.test_db = Path(__file__).parent / "fixtures" / "test_db.db"
         mech_io.db_setup(self.test_db)
+        base_data = mech_io.read_csv(Path(__file__).parent / "fixtures" / "test_clean_data.csv")
+        mech_io.db_insert_board_clean(base_data, db=self.test_db)
         self.test_in_file = Path(__file__).parent / "fixtures" / "test_post_data.json"
         self.test_post_data = mech_io.read_post_json(filepath=self.test_in_file)
 
@@ -185,7 +187,7 @@ class TestCleanTopicData(TestCase):
 
         conn = sqlite3.connect(self.test_db)
         conn.row_factory = sqlite3.Row
-        result_data = conn.execute("""SELECT * FROM topic_advanced WHERE topic_id = '110579'""").fetchall()
+        result_data = conn.execute("""SELECT * FROM topic_data WHERE topic_id = '110579'""").fetchall()
         result_links = conn.execute("""SELECT * FROM topic_link WHERE topic_id = '110579'""").fetchall()
         conn.close()
 
@@ -193,4 +195,4 @@ class TestCleanTopicData(TestCase):
         self.assertEqual("14 days, 15:42:35", result_data[0]['post_25_delta'])
         self.assertEqual("2021-01-23 09:19:34", result_data[0]['topic_accessed'])
         self.assertEqual(8, len(result_links))
-        self.assertTrue("https://mechsandco.com/products/gb-gmk-iconographic" in  result_links[0]['link'])
+        self.assertTrue("https://mechsandco.com/products/gb-gmk-iconographic" in result_links[0]['link'])

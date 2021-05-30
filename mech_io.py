@@ -159,61 +159,68 @@ def db_setup(db, overwrite=False):
     :return: none
     """
     # TODO: implement unit test for this
+    # TODO: clean up extra sql here
     if os.path.isfile(db):
         if overwrite:
             os.remove(db)
         else:
             raise FileExistsError("db file already exists")
 
-    table_sqls = {}
-    table_sqls['topic_data'] = """
-        CREATE TABLE topic_data (
-        topic_id VARCHAR PRIMARY KEY,
-        product_type VARCHAR,
-        thread_type VARCHAR,
-        set_name VARCHAR,
-        creator VARCHAR,
-        creator_id VARCHAR,      
-        views INTEGER,
-        replies INTEGER,
-        board VARCHAR,
-        board_accessed VARCHAR,
-        title VARCHAR); 
-        """
-    table_sqls['topic_icode'] = """
-        CREATE TABLE topic_icode (
-        topic_id VARCHAR NOT NULL,
-        info_code VARCHAR NOT NULL,
-        PRIMARY KEY (topic_id, info_code),
-        FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id));
-        """
-    table_sqls['topic_advanced'] = """
-        CREATE TABLE topic_advanced (
-        topic_id VARCHAR PRIMARY KEY,
-        topic_created VARCHAR,
-        num_posts INTEGER,
-        num_posters INTEGER,
-        num_creator_posts INTEGER,
-        percent_creator_posts FLOAT,
-        post_25_delta VARCHAR,
-        post_50_delta VARCHAR,
-        topic_accessed VARCHAR,
-        FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id));
-        """
-    table_sqls['topic_link'] = """
-        CREATE TABLE topic_link (
-        id INTEGER PRIMARY KEY,
-        topic_id VARCHAR NOT NULL,
-        link VARCHAR NOT NULL,
-        FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id));
-        """
+    script_filepath = Path(__file__).parent / "db_scripts" / "db_setup.sql"
+
+    with open(script_filepath, 'r') as setup_script:
+        setup_sql = setup_script.read()
+
+    # table_sqls = {}
+    # table_sqls['topic_data'] = """
+    #     CREATE TABLE topic_data (
+    #     topic_id VARCHAR PRIMARY KEY,
+    #     product_type VARCHAR,
+    #     thread_type VARCHAR,
+    #     set_name VARCHAR,
+    #     creator VARCHAR,
+    #     creator_id VARCHAR,
+    #     views INTEGER,
+    #     replies INTEGER,
+    #     board VARCHAR,
+    #     board_accessed VARCHAR,
+    #     title VARCHAR);
+    #     """
+    # table_sqls['topic_icode'] = """
+    #     CREATE TABLE topic_icode (
+    #     topic_id VARCHAR NOT NULL,
+    #     info_code VARCHAR NOT NULL,
+    #     PRIMARY KEY (topic_id, info_code),
+    #     FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id));
+    #     """
+    # table_sqls['topic_advanced'] = """
+    #     CREATE TABLE topic_advanced (
+    #     topic_id VARCHAR PRIMARY KEY,
+    #     topic_created VARCHAR,
+    #     num_posts INTEGER,
+    #     num_posters INTEGER,
+    #     num_creator_posts INTEGER,
+    #     percent_creator_posts REAL,
+    #     post_25_delta VARCHAR,
+    #     post_50_delta VARCHAR,
+    #     topic_accessed VARCHAR,
+    #     FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id));
+    #     """
+    # table_sqls['topic_link'] = """
+    #     CREATE TABLE topic_link (
+    #     id INTEGER PRIMARY KEY,
+    #     topic_id VARCHAR NOT NULL,
+    #     link VARCHAR NOT NULL,
+    #     FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id));
+    #     """
 
     conn = sqlite3.connect(db)
     c = conn.cursor()
 
-    for table in table_sqls.keys():
-        c.execute(table_sqls[table])
-    conn.commit()
+    # for table in table_sqls.keys():
+    #     c.execute(table_sqls[table])
+    c.executescript(setup_sql)
+    # conn.commit()
     conn.close()
 
     return
@@ -233,7 +240,7 @@ def _db_check_exists(db, setup=False):
 
 def db_insert_board_clean(data, db=None, new_db=True):
     """
-    Inserts given board data into database
+    Inserts topic index data for given board into database
     :param data: list[dict] or [dict] of data to insert
     :param db: path to database
     :param new_db: is this going into a new database?
@@ -257,14 +264,16 @@ def db_insert_board_clean(data, db=None, new_db=True):
             for info_code in entry['info_codes']:
                 info_codes.append({'topic_id': entry['topic_id'], 'info_code': info_code})
 
-    topic_data_query = """INSERT INTO topic_data (topic_id, product_type, thread_type, set_name, creator, creator_id, 
-                                        views, replies, board, board_accessed, title)
-                VALUES (:topic_id, :product_type, :thread_type, :set_name, :creator, :creator_id, :views,
-                  :replies, :board, :board_accessed, :title);
-                """
-    topic_icode_query = """INSERT OR REPLACE INTO topic_icode (topic_id, info_code)
-                VALUES (:topic_id, :info_code);
-                """
+    topic_data_query = """
+        INSERT INTO topic_data (topic_id, product_type, thread_type, set_name, creator, creator_id, views, replies, 
+            board_id, board_accessed, title)
+        VALUES (:topic_id, :product_type, :thread_type, :set_name, :creator, :creator_id, :views, :replies, 
+            :board_id, :board_accessed, :title);
+        """
+    topic_icode_query = """
+        INSERT OR REPLACE INTO topic_icode (topic_id, info_code)
+        VALUES (:topic_id, :info_code);
+        """
 
     conn = sqlite3.connect(db)
 
@@ -279,7 +288,7 @@ def db_insert_board_clean(data, db=None, new_db=True):
 
 def db_insert_topic_clean(data, db=None):
     """
-    Inserts topic data into database
+    Inserts topic page data into database
     :param data: list[dict] or [dict] of data to insert
     :param db: path to database
     :return: none
@@ -305,15 +314,22 @@ def db_insert_topic_clean(data, db=None):
                 post_links.append({'topic_id': entry['topic_id'], 'link': link})
 
     topic_advanced_query = """
-        INSERT INTO topic_advanced (topic_id, topic_created, num_posts, num_posters, num_creator_posts,
-            percent_creator_posts, post_25_delta, post_50_delta, topic_accessed) 
-        VALUES (:topic_id, :topic_created, :num_posts, :num_posters, :num_creator_posts,
-            :percent_creator_posts, :post_25_delta, :post_50_delta, :topic_accessed);
+        UPDATE topic_data
+        SET 
+            topic_created = :topic_created, 
+            num_posts = :num_posts, 
+            num_posters = :num_posters, 
+            num_creator_posts = :num_creator_posts,
+            post_25_delta = :post_25_delta, 
+            post_50_delta = :post_50_delta, 
+            topic_accessed = :topic_accessed
+        WHERE topic_id = :topic_id;
         """
 
-    topic_link_query = """INSERT OR REPLACE INTO topic_link (topic_id, link)
-                VALUES (:topic_id, :link);
-                """
+    topic_link_query = """
+        INSERT OR REPLACE INTO topic_link (topic_id, link)
+        VALUES (:topic_id, :link);
+        """
 
     conn = sqlite3.connect(db)
 
@@ -341,8 +357,8 @@ def db_query_keycap_topics(db=None, board=None, select_restriction=None):
     values = {}
     board_condition = ""
     if board:
-        board_condition = "AND topic_data.board = :board"
-        values['board'] = board
+        board_condition = "AND topic_data.board_id = :board_id"
+        values['board_id'] = board
 
     extra_condition = ""
     if select_restriction:
@@ -351,11 +367,11 @@ def db_query_keycap_topics(db=None, board=None, select_restriction=None):
         else:
             raise ValueError("available select types are None and 'new'")
 
-    keycap_topic_query = f"""SELECT topic_data.topic_id
-                          FROM topic_data LEFT JOIN topic_advanced
-                            ON topic_data.topic_id = topic_advanced.topic_id
-                          WHERE topic_data.product_type = 'keycaps' {board_condition} {extra_condition};
-                          """
+    keycap_topic_query = f"""
+        SELECT topic_data.topic_id
+        FROM topic_data 
+        WHERE topic_data.product_type = 'keycaps' {board_condition} {extra_condition};
+        """
 
     conn = sqlite3.connect(db)
 

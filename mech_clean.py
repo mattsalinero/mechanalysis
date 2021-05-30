@@ -39,7 +39,7 @@ def clean_board_data(in_data=None, in_filepath=None, out_filepath=None, out_db=N
     if out_filepath:
         # save data to csv - note this does not include an index field other than topic id
         fields = ['topic_id', 'product_type', 'thread_type', 'info_codes', 'set_name', 'creator', 'creator_id', 'views',
-                  'replies', 'board', 'board_accessed', 'title']
+                  'replies', 'board_id', 'board_accessed', 'title']
         mech_io.write_csv(out_data, out_filepath, fields)
 
         print(f"Saved to {out_filepath}")
@@ -109,7 +109,7 @@ def parse_basic(input_topic):
     :param input_topic: dict containing extracted data for one topic
     :return: dict containing extracted data (values set to None if unparseable)
     """
-    basic_data = {'topic_id': None, 'creator': None, 'creator_id': None, 'views': None, 'replies': None, 'board': None,
+    basic_data = {'topic_id': None, 'creator': None, 'creator_id': None, 'views': None, 'replies': None, 'board_id': None,
                   'board_accessed': None, 'title': None}
 
     # parse for topic id
@@ -132,7 +132,7 @@ def parse_basic(input_topic):
 
     # parse for board number
     if 'url' in input_topic and input_topic['url']:
-        basic_data['board'] = input_topic['url'].split("board=")[-1].split('.')[0]
+        basic_data['board_id'] = input_topic['url'].split("board=")[-1].split('.')[0]
 
     # parse for access data and title
     if 'board_accessed' in input_topic and input_topic['board_accessed']:
@@ -218,8 +218,6 @@ def find_post_stats(post_data):
         if post['poster_id'] == creator_id:
             num_creator_posts += 1
 
-    percent_creator_posts = num_creator_posts / num_posts
-
     num_posters = len({post['poster_id'] for post in post_data})
 
     # calculate stats for reaching certain post milestones
@@ -236,7 +234,6 @@ def find_post_stats(post_data):
     post_stats = {'num_posts': num_posts,
                   'num_posters': num_posters,
                   'num_creator_posts': num_creator_posts,
-                  'percent_creator_posts': percent_creator_posts,
                   'post_25_delta': post_25_delta,
                   'post_50_delta': post_50_delta}
 

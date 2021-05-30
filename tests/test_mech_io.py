@@ -157,7 +157,7 @@ class TestDBSetup(TestCase):
         conn = sqlite3.connect(test_setup)
         tables = conn.execute("""SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'""")
         table_list = tables.fetchall()
-        self.assertEqual(4, len(table_list))
+        self.assertEqual(3, len(table_list))
         conn.close()
         os.remove(test_setup)
 
@@ -165,7 +165,7 @@ class TestDBSetup(TestCase):
 class TestInsertBoardClean(TestCase):
     def setUp(self):
         self.test_db = Path(__file__).parent / "fixtures" / "test_insert.db"
-        # db_setup(self.test_db)
+        db_setup(self.test_db)
 
     def tearDown(self):
         os.remove(self.test_db)
@@ -177,10 +177,10 @@ class TestInsertBoardClean(TestCase):
 
         test_data = [{'topic_id': "111111", 'product_type': "keycaps", 'thread_type': None,
                       'info_codes': ["TC1", "TC2"], 'set_name': None, 'creator': None, 'creator_id': None,
-                      'views': 111, 'replies': None, 'board': None, 'board_accessed': None, 'title': None},
+                      'views': 111, 'replies': None, 'board_id': None, 'board_accessed': None, 'title': None},
                      {'topic_id': "222222", 'product_type': "keycaps", 'thread_type': None,
                       'info_codes': None, 'set_name': None, 'creator': None, 'creator_id': None,
-                      'views': 222, 'replies': None, 'board': None, 'board_accessed': None, 'title': None}
+                      'views': 222, 'replies': None, 'board_id': None, 'board_accessed': None, 'title': None}
                      ]
         db_insert_board_clean(test_data, db=self.test_db)
 
@@ -203,7 +203,7 @@ class TestInsertBoardClean(TestCase):
     def test_db_insert_board_clean_single(self):
         test_data = {'topic_id': "111111", 'product_type': "keycaps", 'thread_type': None,
                      'info_codes': ["TC1", "TC2"], 'set_name': None, 'creator': None, 'creator_id': None,
-                     'views': 111, 'replies': None, 'board': None, 'board_accessed': None, 'title': None}
+                     'views': 111, 'replies': None, 'board_id': None, 'board_accessed': None, 'title': None}
         db_insert_board_clean(test_data, db=self.test_db)
 
         conn = sqlite3.connect(self.test_db)
@@ -222,7 +222,7 @@ class TestInsertBoardClean(TestCase):
 class TestInsertTopicClean(TestCase):
     def setUp(self):
         self.test_db = Path(__file__).parent / "fixtures" / "test_db.db"
-        db_setup(self.test_db)
+        db_setup(self.test_db, overwrite=True)
         base_data = read_csv(Path(__file__).parent / "fixtures" / "test_clean_data.csv")
         db_insert_board_clean(base_data, db=self.test_db)
 
@@ -235,11 +235,10 @@ class TestInsertTopicClean(TestCase):
 
         conn = sqlite3.connect(self.test_db)
         conn.row_factory = sqlite3.Row
-        result_data = conn.execute("""SELECT * FROM topic_advanced WHERE topic_id = '110579'""").fetchall()
+        result_data = conn.execute("""SELECT * FROM topic_data WHERE topic_id = '110579'""").fetchall()
         result_links = conn.execute("""SELECT * FROM topic_link WHERE topic_id = '110579'""").fetchall()
         conn.close()
         self.assertEqual("2021-01-01 00:01:00", result_data[0]['topic_created'])
-        self.assertEqual(0.5, result_data[0]['percent_creator_posts'])
         self.assertEqual("10:00:00", result_data[0]['post_25_delta'])
         self.assertEqual("2021-01-21 23:06:50", result_data[0]['topic_accessed'])
         self.assertEqual(3, len(result_links))
@@ -249,7 +248,7 @@ class TestInsertTopicClean(TestCase):
 class TestQueryKeycapTopics(TestCase):
     def setUp(self):
         self.test_db = Path(__file__).parent / "fixtures" / "test_db.db"
-        db_setup(self.test_db)
+        db_setup(self.test_db, overwrite=True)
         test_data = read_csv(Path(__file__).parent / "fixtures" / "test_clean_data.csv")
         db_insert_board_clean(test_data, db=self.test_db)
 
