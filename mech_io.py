@@ -311,7 +311,7 @@ def db_insert_topic_clean(data, db=None):
     for entry in values:
         if entry['post_links']:
             for link in entry['post_links']:
-                post_links.append({'topic_id': entry['topic_id'], 'link': link})
+                post_links.append({'topic_id': entry['topic_id'], 'link': link['link'], 'domain': link['domain']})
 
     topic_advanced_query = """
         UPDATE topic_data
@@ -327,8 +327,8 @@ def db_insert_topic_clean(data, db=None):
         """
 
     topic_link_query = """
-        INSERT OR REPLACE INTO topic_link (topic_id, link)
-        VALUES (:topic_id, :link);
+        INSERT OR REPLACE INTO topic_link (topic_id, link, domain)
+        VALUES (:topic_id, :link, :domain);
         """
 
     conn = sqlite3.connect(db)

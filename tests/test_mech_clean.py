@@ -167,13 +167,16 @@ class TestFindPostLinks(TestCase):
         post_links = find_post_links(self.test_post_data['fp_links'], self.test_post_data['fp_images'])
 
         self.assertEqual(8, len(post_links))
-        self.assertTrue("https://mechsandco.com/products/gb-gmk-iconographic" in post_links)
+        self.assertTrue({'link': "https://mechsandco.com/products/gb-gmk-iconographic",
+                         'domain': "mechsandco.com"} in post_links)
+        self.assertTrue({'link': "https://en.zfrontier.com/products/gmk-iconographic",
+                         'domain': "zfrontier.com"} in post_links)
 
 
 class TestCleanTopicData(TestCase):
     def setUp(self):
         self.test_db = Path(__file__).parent / "fixtures" / "test_db.db"
-        mech_io.db_setup(self.test_db)
+        mech_io.db_setup(self.test_db, overwrite=True)
         base_data = mech_io.read_csv(Path(__file__).parent / "fixtures" / "test_clean_data.csv")
         mech_io.db_insert_board_clean(base_data, db=self.test_db)
         self.test_in_file = Path(__file__).parent / "fixtures" / "test_post_data.json"
@@ -195,4 +198,5 @@ class TestCleanTopicData(TestCase):
         self.assertEqual("14 days, 15:42:35", result_data[0]['post_25_delta'])
         self.assertEqual("2021-01-23 09:19:34", result_data[0]['topic_accessed'])
         self.assertEqual(8, len(result_links))
-        self.assertTrue("https://mechsandco.com/products/gb-gmk-iconographic" in result_links[0]['link'])
+        self.assertEqual("https://mechsandco.com/products/gb-gmk-iconographic", result_links[0]['link'])
+        self.assertEqual("mechsandco.com", result_links[0]['domain'])

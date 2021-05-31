@@ -9,3 +9,6 @@ dependencies:
   - matplotlib
   - seaborn
   - html5lib
+  - lark-parser
+  - emoji
+  - tldextract
