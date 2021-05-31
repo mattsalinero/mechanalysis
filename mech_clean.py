@@ -6,6 +6,7 @@ import emoji
 import pandas as pd
 import mech_io
 from lark import Lark
+import tldextract
 
 
 def clean_board_data(in_data=None, in_filepath=None, out_filepath=None, out_db=None):
@@ -195,11 +196,16 @@ def find_post_links(raw_links, raw_images):
     """
     out_links = []
     for link in raw_links:
-        # rule out links that are just image sources
-        if link in raw_images or "action=dlattach" in link:
+        # rule out links that are just image sources or aren't likely to be links (no "." or seem to be javascript)
+        if link in raw_images or "." not in link or any(bad_link in link for bad_link in ["action=dlattach", "javascript:void"]):
             continue
         else:
-            out_links.append(link)
+            # use tldextract to parse link into subdomain, domain, and suffix
+            extracted_link = tldextract.extract(link)
+            # check if parsed domain has a suffix and a domain
+            if extracted_link.domain and extracted_link.suffix:
+                domain = '.'.join([extracted_link.domain, extracted_link.suffix])
+                out_links.append({'link':link, 'domain':domain})
     return out_links
 
 

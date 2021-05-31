@@ -1,3 +1,4 @@
+/* Main fact table for topic data */
 CREATE TABLE topic_data (
 	topic_id VARCHAR PRIMARY KEY,
 	topic_created VARCHAR, --datetime value
@@ -8,7 +9,7 @@ CREATE TABLE topic_data (
 	creator_id VARCHAR,
 	views INTEGER,
 	replies INTEGER,
-	board_id VARCHAR, --renamed from board
+	board_id VARCHAR,
 	board_accessed VARCHAR, --datetime value
 	title VARCHAR,
 	num_posts INTEGER,
@@ -19,6 +20,7 @@ CREATE TABLE topic_data (
 	topic_accessed VARCHAR --datetime value
 	);
 
+/* Topic infocodes (many to one relationship with topics) */
 CREATE TABLE topic_icode (
 	topic_id VARCHAR NOT NULL,
 	info_code VARCHAR NOT NULL,
@@ -26,6 +28,7 @@ CREATE TABLE topic_icode (
 	FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id)
 	);
 
+/* Links contained in topic first post (many to one relationship with topics) */
 CREATE TABLE topic_link (
 	id INTEGER PRIMARY KEY,
 	topic_id VARCHAR NOT NULL,

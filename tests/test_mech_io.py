@@ -243,6 +243,7 @@ class TestInsertTopicClean(TestCase):
         self.assertEqual("2021-01-21 23:06:50", result_data[0]['topic_accessed'])
         self.assertEqual(3, len(result_links))
         self.assertEqual("test_link_1", result_links[0]['link'])
+        self.assertEqual("test_domain_1", result_links[0]['domain'])
 
 
 class TestQueryKeycapTopics(TestCase):

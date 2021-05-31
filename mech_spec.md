@@ -1,4 +1,4 @@
-# Mech Keyboard Analysis Project
+# Mechanical  Keyboard Analysis Project
 
 Creator: Matt Salinero
 
@@ -67,9 +67,12 @@ The raw scraped data from topic indexes will be aggregated and stored in .csv fi
 ### Database(using SQLite)
 A database will be used to store cleaned and processed data. As this project is only focused on keysets (for the moment), any cleaned data on non-keyset topics (such as data gathered from topic index pages) will be stored. These database entries may be incomplete as no topic page-level data gathering is planned for non-keyset topics. The current database schema is included below.
 
+#### Schema:
 ```sql
+/* Main fact table for topic data */
 CREATE TABLE topic_data (
 	topic_id VARCHAR PRIMARY KEY,
+	topic_created VARCHAR, --datetime value
 	product_type VARCHAR,
 	thread_type VARCHAR,
 	set_name VARCHAR,
@@ -77,11 +80,18 @@ CREATE TABLE topic_data (
 	creator_id VARCHAR,
 	views INTEGER,
 	replies INTEGER,
-	board VARCHAR,
+	board_id VARCHAR,
 	board_accessed VARCHAR, --datetime value
-	title VARCHAR
+	title VARCHAR,
+	num_posts INTEGER,
+	num_posters INTEGER,
+	num_creator_posts INTEGER,
+	post_25_delta VARCHAR, --time interval
+	post_50_delta VARCHAR, --time interval
+	topic_accessed VARCHAR --datetime value
 	);
 
+/* Topic infocodes (many to one relationship with topics) */
 CREATE TABLE topic_icode (
 	topic_id VARCHAR NOT NULL,
 	info_code VARCHAR NOT NULL,
@@ -89,23 +99,12 @@ CREATE TABLE topic_icode (
 	FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id)
 	);
 
-CREATE TABLE topic_advanced (
-	topic_id VARCHAR PRIMARY KEY,
-	topic_created VARCHAR, --datetime value
-	num_posts INTEGER,
-	num_posters INTEGER,
-	num_creator_posts INTEGER,
-	percent_creator_posts REAL,
-	post_25_delta VARCHAR, --time interval
-	post_50_delta VARCHAR, --time interval
-	topic_accessed VARCHAR, --datetime value
-	FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id)
-	);
-
+/* Links contained in topic first post (many to one relationship with topics) */
 CREATE TABLE topic_link (
 	id INTEGER PRIMARY KEY,
 	topic_id VARCHAR NOT NULL,
 	link VARCHAR NOT NULL,
+	domain VARCHAR, --stores the top level domain for the link
 	FOREIGN KEY (topic_id) REFERENCES topic_data(topic_id)
 	);
 ```
@@ -125,10 +124,10 @@ Some extracted fields have to undergo significant processing before they will be
 5. Process topic page data
 	- process structured data (mostly this is the topic creation date)
 	- clean first post data (separating and storing links)
-	- aggregate post-level data (aggregating totla posts, creator posts, time to X posts)
+	- aggregate post-level data (aggregating total posts, creator posts, time to X posts)
 6. Update database with processed topic page data
 
-Additionally, the data processing stage is planned to include linking group buy posts with any related interest check posts. This linking can be based on the posting user and/or set title.
+Additionally, the data processing stage is planned to include linking group buy posts with any related interest check posts based on the posting user and/or keyset title.
 
 ---
 ## Data Analysis
