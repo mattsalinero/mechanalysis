@@ -1,6 +1,6 @@
 /* analysis SQL queries for mech analysis project */
 
-/* basic stats query */
+/* basic aggregate stats */
 SELECT
     CASE
         WHEN board_id = '70' THEN 'keycap group buy'
@@ -28,20 +28,67 @@ SELECT
 FROM topic_data
 GROUP BY board_id;
 
+/* keycap group buy yearly aggregate stats */
+SELECT
+    ydata.*,
+    num_icodes
+FROM (
+    SELECT --this derived table calculates most rows
+        STRFTIME('%Y', topic_created) as gb_year,
+        COUNT(tdata.topic_id) as num_gbs,
+        COUNT(DISTINCT creator_id) as num_creators,
+        CAST(AVG(views) as INT) as avg_views,
+        MAX(views) as max_views,
+        CAST(AVG(replies) as INT) as avg_replies,
+        MAX(replies) as max_replies,
+        COUNT(CASE WHEN num_posts >= 25 THEN 1 END) * 100.0 
+            / COUNT(tdata.topic_id) as percent_25_posts,
+        COUNT(CASE WHEN num_posts >= 50 THEN 1 END) * 100.0 
+            / COUNT(tdata.topic_id) as percent_50_posts,
+        AVG(IFNULL(ldata.num_links, 0)) as avg_links
+    --average time for gbs reaching 25/50 posts
+    FROM topic_data as tdata
+    LEFT JOIN (
+        SELECT
+            topic_id,
+            COUNT(id) as num_links
+        FROM topic_link
+        GROUP BY topic_id
+        ) ldata
+    ON tdata.topic_id = ldata.topic_id
+    WHERE product_type = 'keycaps'
+        AND board_id = '70'
+    GROUP BY gb_year
+    ) ydata
+JOIN (
+    SELECT --this derived table calculates number of infocodes used
+        STRFTIME('%Y', topic_created) as gb_year,
+        COUNT(DISTINCT icode.info_code) as num_icodes
+    FROM topic_data as itdata
+    JOIN topic_icode as icode
+        ON itdata.topic_id = icode.topic_id
+    WHERE product_type = 'keycaps'
+        AND board_id = '70'
+    GROUP BY gb_year
+    ) iydata
+ON ydata.gb_year = iydata.gb_year
+ORDER BY gb_year;
+
 /* per-topic group buy data for visualization */
 SELECT
     tdata.topic_id,
     icode.info_code,
     set_name,
-    icode.info_code || ' ' || set_name as 'full_name',
+    icode.info_code || ' ' || set_name as full_name,
     creator,
-    DATETIME(topic_created) as 'topic_created',
+    DATETIME(topic_created) as topic_created,
+    IFNULL(ldata.num_links, 0) as num_links,
     views,
     replies,
     num_posters,
-    (num_creator_posts * 1.0 / num_posts) * 100 as 'percent_creator_posts',   
-    DATETIME(post_25_delta) as 'post_25_delta', --currently broken (many missing values)
-    DATETIME(post_50_delta) as 'post_50_delta' --currently broken (many missing values)
+    (num_creator_posts * 1.0 / num_posts) * 100 as percent_creator_posts,   
+    DATETIME(post_25_delta) as post_25_delta,
+    DATETIME(post_50_delta) as post_50_delta
 FROM topic_data as tdata
 JOIN (
     SELECT --window function to only pull first/primary infocode (no duplicate topic ids)
@@ -52,6 +99,14 @@ JOIN (
     ) icode
     ON tdata.topic_id = icode.topic_id
         AND icode.row_num = 1
+LEFT JOIN (
+    SELECT --aggregates total number of links in post
+        topic_id,
+        COUNT(link) as num_links
+    FROM topic_link
+    GROUP BY topic_id
+    ) ldata
+    ON tdata.topic_id = ldata.topic_id
 WHERE product_type = 'keycaps'
     AND board_id = '70'
 ORDER BY DATETIME(topic_created) desc;
@@ -62,10 +117,10 @@ SELECT
     CASE
         WHEN board_id = '70' THEN 'gb'
         WHEN board_id = '132' THEN 'ic'
-    END as 'board',
+    END as board,
     icode.info_code,
     set_name,
-    icode.info_code || ' ' || set_name as 'full_name',
+    icode.info_code || ' ' || set_name as full_name,
     creator,
     views,
     replies
@@ -82,34 +137,97 @@ JOIN (
 WHERE product_type = 'keycaps'
 ORDER BY CAST(tdata.topic_id as INT) desc;
 
+/* per-topic infocode data (separate rows for secondary infocodes) */
+SELECT
+    tdata.topic_id,
+    icode.info_code,
+    set_name,
+    creator,
+    DATETIME(topic_created) as topic_created,
+    views,
+    replies,
+    num_posters,
+    (num_creator_posts * 1.0 / num_posts) * 100 as percent_creator_posts,   
+    DATETIME(post_25_delta) as post_25_delta,
+    DATETIME(post_50_delta) as post_50_delta
+FROM topic_data as tdata
+JOIN topic_icode as icode
+    ON tdata.topic_id = icode.topic_id
+WHERE product_type = 'keycaps'
+    AND board_id = '70'
+ORDER BY DATETIME(topic_created) desc;
+
 /* per-infocode data */
 SELECT
     info_code,
     CASE
         WHEN tdata.board_id = '70' THEN 'gb'
         WHEN tdata.board_id = '132' THEN 'ic'
-    END as 'board',
-    COUNT(info_code),
-    CAST(AVG(tdata.views) as INT) as 'average_views',
-    MAX(tdata.views) as 'max_views',
-    CAST(AVG(tdata.replies) as INT) as 'average_replies',
-    MAX(tdata.replies) as 'max_replies'
+    END as board,
+    COUNT(info_code) as occurances,
+    CAST(AVG(tdata.views) as INT) as average_views,
+    MAX(tdata.views) as max_views,
+    CAST(AVG(tdata.replies) as INT) as average_replies,
+    MAX(tdata.replies) as max_replies
 FROM topic_icode as icode
 JOIN topic_data as tdata
     ON icode.topic_id = tdata.topic_id
 GROUP BY info_code, board
 ORDER BY COUNT(info_code) desc;
 
-/* infocodes over time (include duplicate infocodes) */
+/* yearly icode data */
+SELECT
+    info_code,
+    STRFTIME('%Y', tdata.topic_created) as gb_year,
+    COUNT(info_code) as occurances,
+    CAST(AVG(tdata.views) as INT) as average_views,
+    MAX(tdata.views) as max_views,
+    CAST(AVG(tdata.replies) as INT) as average_replies,
+    MAX(tdata.replies) as max_replies
+FROM topic_icode as icode
+JOIN topic_data as tdata
+    ON icode.topic_id = tdata.topic_id
+WHERE board_id = '70'
+GROUP BY info_code, gb_year
+ORDER BY gb_year;
 
---TBC
+/* per-domain/vendor data */
+SELECT
+    domain,
+    COUNT(DISTINCT topic_id) as num_topics,
+    COUNT(id) as num_occurances
+FROM topic_link
+GROUP BY domain
+ORDER BY num_topics desc;
 
-/* top links/vendors */
+/* yearly domain data */
+SELECT
+    domain,
+    STRFTIME('%Y', tdata.topic_created) as gb_year,
+    COUNT(DISTINCT ldata.topic_id) as num_topics,
+    COUNT(id) as num_occurances
+FROM topic_link as ldata
+JOIN topic_data as tdata
+    ON ldata.topic_id = tdata.topic_id
+GROUP BY domain, gb_year
+ORDER BY gb_year;
 
---TBC 
+/* per-creator data */
+SELECT
+    creator_id,
+    creator,
+    COUNT(topic_id) as topics_created,
+    COUNT(CASE WHEN board_id = '70' THEN 1 END) as gbs_created,
+    COUNT(CASE WHEN board_id = '132' THEN 1 END) as ics_created,
+    CAST(AVG(tdata.views) as INT) as average_views,
+    CAST(AVG(tdata.replies) as INT) as average_replies
+FROM topic_data as tdata
+WHERE product_type = 'keycaps'
+GROUP BY creator_id
+ORDER BY topics_created desc;
 
 /* group buy interest check match */
-
 --TBC
 
 /* success metrics (limit to last two years and try to correlate low replies/views with certain characteristics) */
+--TBC
