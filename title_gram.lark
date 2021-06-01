@@ -26,7 +26,7 @@ icode.3: /GMK/i -> gmk
      | /MDA/i -> mda
      | /XDA/i -> xda
      | /DCS/i -> dcs
-     | (/GeekArk/i | /GA/i) -> ga
+     | (/GeekArk/i | /GA(?=\W)/i) -> ga
      | /Tai[ -]?Hao/i -> th
 
 namesection: MISCBLOCK+
