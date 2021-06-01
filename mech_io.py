@@ -363,7 +363,7 @@ def db_query_keycap_topics(db=None, board=None, select_restriction=None):
     extra_condition = ""
     if select_restriction:
         if select_restriction == "new":
-            extra_condition = "AND topic_advanced.topic_accessed IS NULL"
+            extra_condition = "AND topic_data.topic_accessed IS NULL"
         else:
             raise ValueError("available select types are None and 'new'")
 

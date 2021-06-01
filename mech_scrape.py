@@ -31,7 +31,7 @@ def scrape_board(forum_url, board, page_limit=10, date_limit=None, request_inter
 
     session = requests.Session()
 
-    first_page = session.get(base_url, timeout=5)
+    first_page = session.get(base_url, timeout=30)
     expected_topics = _board_topic_count(BeautifulSoup(first_page.content, 'html5lib'))
     scraped_board = []
     for x in range(page_limit):
@@ -39,7 +39,7 @@ def scrape_board(forum_url, board, page_limit=10, date_limit=None, request_inter
 
         # access current url for page to scrape
         print("requesting: " + current_url)
-        current_page = session.get(current_url, timeout=5)
+        current_page = session.get(current_url, timeout=30)
         soup = BeautifulSoup(current_page.content, 'html5lib')
 
         current_data = scrape_page(soup, current_url)
@@ -164,7 +164,7 @@ def scrape_topics(forum_url, topic_ids, topic_limit=None, offset=0, date_limit=N
 
         # access current url for page to scrape
         print("requesting: topic " + topic_id)
-        current_page = session.get(current_url, timeout=5)
+        current_page = session.get(current_url, timeout=30)
         soup = BeautifulSoup(current_page.content, 'html5lib')
 
         current_data = scrape_topic(soup, topic_id)
