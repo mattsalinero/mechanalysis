@@ -4,7 +4,7 @@ Creator: Matt Salinero
 
 Created: 2021-01-11
 
-Last Updated: 2021-05-29
+Last Updated: 2021-06-02
 
 ---
 ## Project Overview
@@ -116,25 +116,103 @@ Some extracted fields have to undergo significant processing before they will be
 
 ### Data Processing/Cleaning Steps
 1. Scrape data from topic indexes
-2. Process topic index data
+2. Process topic index data (from both group buy and interest check forums)
 	- process structured data fields (topic id, creator, views, replies, etc.)
 	- run topic titles through parser to detect keyset name, infocodes, product type (keyset or other)
 3. Store topic index data in database
 4. Scrape data from relevant topic pages
 5. Process topic page data
-	- process structured data (mostly this is the topic creation date)
+	- process structured data (mostly this is topic creation date)
 	- clean first post data (separating and storing links and domains)
-	- aggregate post-level data (aggregating total posts, creator posts, time to X posts)
+    	- links are separated from image sources, then parsed using a library to extract just the domain names
+	- aggregate post-level data from first 50 posts in topic (number of creator posts, time to X posts in topic)
 6. Update database with processed topic page data
+7. Manually clean database
+	- scan through topic_data correcting improperly parsed set names
 
-Additionally, the data processing stage is planned to include linking group buy posts with any related interest check posts based on the posting user and/or keyset title.
+### Topic Title Parsing
+This project uses Lark's implementation of an Earley parser and a custom grammar that recognizes the infocodes and general structure of group buy topics. The grammar tries to identify the section of the topic title where the keyset is identified (usually of the form `[infocode][setname]`) by referencing a dictionary of possible infocodes that are currently in use. There is a finite (but growing) number of infocodes currently in use and the parser can use an identified infocode to find the (usually adjacent) name of the keyset.
+
+The full parser grammar (including the dictionary of infocodes) is stored in a [.lark file](title_gram.lark).
 
 ---
 ## Data Analysis
 
+*TBC*
 This stage is planned to largely take place in Jupyter and will initially produce a one-off report (with nice graphs). As discussed in the extension section, any useful statistics found in exploratory data analysis may be later formalized into a dashboard.
 
-**TEST PLAN (TBC)**
+### Group Buy - Interest Check Topic Matching
+Matching group buy topics to their corresponding interest check topics is important for analysis of this topic. For example, gb-ic matching can help determine what % of interest checks result in a group buy or how strongly an interest check's popularity is correlated with the existence (or popularity) of a corresponding group buy. 
+  
+#### Assumptions
+- keysets have a consistent (and unique) name across group buy and interest check topics
+- `topic_id` is assigned by the forum sequentially (i.e. earlier topics have lower topic ids)
+- an interest check topic is made before the corresponding group buy topic
+- when multiple group buys are run for the same product, they are run sequentially (e.g. a "round 2" group buy)
+
+#### Matching Algorithm
+- retreive `topic_id`, `set_name`, and `info_code` data for each topic to match
+  - the combination of `info_code` and `set_name` is the `full_name` for the keyset
+- calculate the "topic rank" for each topic
+  - topic rank reflects how many previous topics were created with the same name
+  - for example, `topic_rank: 1` is the first topic with that name and `topic_rank: 5` is the fifth
+  - calculated by comparing `topic_id` for each topic against all other topics with the same `full_name`
+    - lowest `topic_id` is rank 1, next lowest is rank 2, and so on
+    - in SQL this is implemented using a window function to `PARTITION BY full_name` and `ORDER BY topic_id`
+- match topics based on name and `topic_rank`
+  - for a successful interest check, the next topic created with that name should be a group buy
+  - in SQL this is implemented by checking if `gb.topic_rank = ic.topic_rank + 1` for any potential match
+
+#### GB-IC matching query:
+```sql
+WITH --cte to get base view with full_name and data relevant for matching
+    full_data (topic_id, board, info_code, set_name, full_name, topic_rank)
+    AS (
+        SELECT
+            tdata.topic_id,
+            CASE
+                WHEN tdata.board_id = '70' THEN 'gb'
+                WHEN tdata.board_id = '132' THEN 'ic'
+            END as board,
+            icode.info_code,
+            set_name,
+            icode.info_code || ' ' || set_name as full_name,
+            ROW_NUMBER() OVER( 
+                PARTITION BY info_code, set_name 
+                ORDER BY CAST(tdata.topic_id as INT)
+                ) as topic_rank --lists if first, second etc. gb/ic
+        FROM topic_data as tdata
+        JOIN (
+            SELECT --pulls first/primary infocode only
+                topic_id,
+                info_code,
+                ROW_NUMBER() OVER(PARTITION BY topic_id) as row_num
+            FROM topic_icode
+            ) icode
+            ON tdata.topic_id = icode.topic_id
+                AND icode.row_num = 1
+        WHERE product_type = 'keycaps'
+    )
+SELECT
+    gbdata.topic_id as gb_topic_id,
+    icdata.topic_id as ic_topic_id,
+    IFNULL(gbdata.full_name, icdata.full_name) as full_name,
+    gbdata.topic_rank,
+    CAST(IFNULL(gbdata.topic_id, icdata.topic_id) as INT) as order_calc
+FROM (
+    SELECT *
+    FROM full_data
+    WHERE board = 'gb'
+    ) gbdata
+OUTER JOIN ( --result includes all topics
+    SELECT *
+    FROM full_data
+    WHERE board = 'ic'
+    ) icdata
+    ON gbdata.full_name = icdata.full_name --checks name, topic_rank for matches
+        AND gbdata.topic_rank = (icdata.topic_rank + 1)
+ORDER BY order_calc;
+```
 
 ----
 ## Results and Visualizations
@@ -146,9 +224,10 @@ This stage is planned to largely take place in Jupyter and will initially produc
 
 - Classifieds board analysis (for post-group buy interest in sets)
 - Further topic content analysis:
-  - Number of kits per buy
-  - Number/distribution of different vendors
+  - number of kits per buy
+  - number/distribution of different vendors
+  - sentiment analysis of first page posts
 - Other data sources (such as reddit)
 - Automatic data intake and publishing:
-  - Public dashboard/report
-  - Automated intake and processing of data for dashboard
+  - public dashboard/report
+  - automated intake and processing of data for dashboard
