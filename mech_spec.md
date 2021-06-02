@@ -23,21 +23,19 @@ Currently, the mechanical keyboard industry lacks clear corporate leaders design
 
 However, despite the group buys being publicly advertized, data on the success or failure rate of group buys is not readily accessible. Much of tha available information is buried in unstructured forum threads or posts. Clear trends present in the publically available data could be used by aspiring designers to inform their choices when attempting to realize their own keycap set.
 
-### Terminology 
-
-*TBC*
-
-- group buy
-- interest check
-- keycap
-- keycap profile
-- keycap material
-- keycap manufacturer
-- infocode
-- keyset
-- topic index (forum)
-- topic (forum)
-- post (forum)
+#### Terminology 
+- group buy: a form of crowdfunding in which user pre-orders are used to fund manufacturing 
+- interest check: a pre-group buy advertisement of a potential group buy product (used to gauge viability of group buy)
+- keycap: a keyboard component, the (usually) molded plastic key your fingers make contact with to type
+- keycap profile: the shape of the keycaps
+- keycap material: the material a keycap is made out of
+- keycap manufacturer: the factory or company producing the keycaps
+- infocode: a short abbreviation containing keycap profile, material, or manufacturer information
+- keyset: a specific set of keycaps offered for sale, commonly include unique colors and/or design elements
+- post (forum): the base unit of communication on a forum, a message submitted by a user
+- topic (forum): a discussion thread on a forum, includes one or more posts (including original post by the topic creator)
+- topic index (forum): a navigation page including basic details for many topics (e.g. title), usually in reverse chronological order
+- topic page (forum): a page associated with a single topic, including topic content (e.g. individual posts)
 
 ### Project Goals
 Analysis in this project will focus on determining:
