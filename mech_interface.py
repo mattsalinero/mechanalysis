@@ -39,6 +39,35 @@ def main():
             scrape_topics("geekhack.org", segment, topic_limit=25, post_dir=post_dir, request_interval=20)
             clean_topic_data(segment, in_folder=post_dir, out_db=mech_db)
             time.sleep(30)
+    
+    if input("rebuild database? (REBUILD/N): ").upper() == "REBUILD":
+        date_string = input("date string of scraped data? (YYYY-MM-DD): ")
+
+        # rebuild topic index portion of db
+        gb_raw_filepath = mech_io.gen_csvpath("gb_raw", date=date_string)
+        gb_clean_filepath = mech_io.gen_csvpath("gb_clean", date=date_string)
+        ic_raw_filepath = mech_io.gen_csvpath("ic_raw", date=date_string)
+        ic_clean_filepath = mech_io.gen_csvpath("ic_clean", date=date_string)
+
+        print("reset db")
+        mech_io.db_setup(mech_db, overwrite=True)
+        
+        print("add gb and ic topic index data")
+        clean_board_data(in_filepath=gb_raw_filepath, out_filepath=gb_clean_filepath, out_db=mech_db)
+        clean_board_data(in_filepath=ic_raw_filepath, out_filepath=ic_clean_filepath, out_db=mech_db)
+
+        # rebuild topic page portion of db
+        post_dir = Path(__file__).parent / "data" / "post_data"
+
+        print("add gb topic page data")
+        topic_list = mech_io.db_query_keycap_topics(mech_db, "70", "new")
+        segment_size = 50
+        # split full topic list into segments based on segment_size
+        topic_segments = [topic_list[i:i+segment_size] for i in range(0, len(topic_list), segment_size)]
+
+        for segment in topic_segments:
+            print(f"rebuilding database for segment starting with {segment[0]}")
+            clean_topic_data(segment, in_folder=post_dir, out_db=mech_db)
 
     return
 
