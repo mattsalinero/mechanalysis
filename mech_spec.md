@@ -19,9 +19,9 @@ This project will attempt to analyze data on keycap group buys listed on communi
 ### Context
 Over the last \~five years the mechanical keyboard hobby has experienced rapid growth. Being a mechanical keyboard enthusiast involves researching, preordering, waiting for, and assembling exclusive mechanical keyboards from limited run keyboard components (such as keycaps, keyboard chassis, and switches). Also, mechanical keyboards can be typed on! 
 
-Currently, the mechanical keyboard industry lacks clear corporate leaders designing and selling enthusiast-level components. Instead, the manufacture of components is often financed using a group buy system that relies on the community preordering components to cover manufacturing costs. These group buys are often advertized on dedicated community forums, subreddits, and content creator communities dedicated to mechanical keyboards. 
+Currently, the mechanical keyboard industry lacks clear corporate leaders designing and selling enthusiast-level components. Instead, the manufacture of components is often financed using a group buy system that relies on the community preordering components to cover manufacturing costs. These group buys are often advertised on dedicated community forums, subreddits, and content creator communities dedicated to mechanical keyboards. 
 
-However, despite the group buys being publicly advertized, data on the success or failure rate of group buys is not readily accessible. Much of tha available information is buried in unstructured forum threads or posts. Clear trends present in the publically available data could be used by aspiring designers to inform their choices when attempting to realize their own keycap set.
+However, despite the group buys being publicly advertised, data on the success or failure rate of group buys is not readily accessible. Much of tha available information is buried in unstructured forum threads or posts. Clear trends present in the publically available data could be used by aspiring designers to inform their choices when attempting to realize their own keycap set.
 
 #### Terminology 
 - group buy: a form of crowdfunding in which user pre-orders are used to fund manufacturing 
@@ -39,11 +39,11 @@ However, despite the group buys being publicly advertized, data on the success o
 
 ### Project Goals
 Analysis in this project will focus on determining:
-- How many keysets have been released/advertised
-- Corresponding keyset names and infocodes
-- Date of group buy for each keyset
-- Interest metrics for each keyset (such as topic replies and views)
-- Statistical link (if any) between popularity of group buy and popularity of interest check for each keyset
+- how many keysets have been released/advertised
+- corresponding keyset names and infocodes
+- date of group buy for each keyset
+- interest metrics for each keyset (such as topic replies and views)
+- statistical link (if any) between popularity of group buy and popularity of interest check for each keyset
 
 ### Out of Scope
 Analysis of prebuilt keyboards and keyboard components other than keycaps (ex. switches, keyboard chassis) isn't a part of this project, though potentially the project could eventually be extended to look at those items.
@@ -113,19 +113,19 @@ CREATE TABLE topic_link (
 Some extracted fields have to undergo significant processing before they will be useable in analysis. Scraped forum data includes important information contained in unstructured data fields (such as the topic title). There are community conventions (sometimes loosely adhered to) for structuring and interest check or group buy post. For example, keyset names are often prefaced by one or more infocodes giving relevant information about the style and manufacturer of the keycaps (ex. "GMK BoW"). To extract relevant features from the unstructured fields, the project uses a parser using a grammar adapted to recognize keycap set-specific terminology. For example, the parser can extract infocodes and keyset titles from topic titles. Similar to data acquisition, data cleaning will occur separately for topic index data and topic page data.
 
 ### Data Processing/Cleaning Steps
-1. Scrape data from topic indexes
-2. Process topic index data (from both group buy and interest check forums)
+1. scrape data from topic indexes
+2. process topic index data (from both group buy and interest check forums)
 	- process structured data fields (topic id, creator, views, replies, etc.)
 	- run topic titles through parser to detect keyset name, infocodes, product type (keyset or other)
-3. Store topic index data in database
-4. Scrape data from relevant topic pages
-5. Process topic page data
+3. store topic index data in database
+4. scrape data from relevant topic pages
+5. process topic page data
 	- process structured data (mostly this is topic creation date)
 	- clean first post data (separating and storing links and domains)
     	- links are separated from image sources, then parsed using a library to extract just the domain names
 	- aggregate post-level data from first 50 posts in topic (number of creator posts, time to X posts in topic)
-6. Update database with processed topic page data
-7. Manually clean database
+6. update database with processed topic page data
+7. manually clean/validate database
 	- scan through topic_data correcting improperly parsed set names
 
 ### Topic Title Parsing
@@ -220,12 +220,12 @@ ORDER BY order_calc;
 ---
 ## Potential Extensions
 
-- Classifieds board analysis (for post-group buy interest in sets)
-- Further topic content analysis:
+- classifieds board analysis (for post-group buy interest in sets)
+- further topic content analysis:
   - number of kits per buy
   - number/distribution of different vendors
   - sentiment analysis of first page posts
-- Other data sources (such as reddit)
-- Automatic data intake and publishing:
+- other data sources (such as reddit)
+- automatic data intake and publishing:
   - public dashboard/report
   - automated intake and processing of data for dashboard
