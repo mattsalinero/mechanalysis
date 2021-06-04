@@ -4,7 +4,7 @@ Creator: Matt Salinero
 
 Created: 2021-01-11
 
-Last Updated: 2021-06-02
+Last Updated: 2021-06-03
 
 ---
 ## Project Overview
@@ -62,8 +62,11 @@ Collected data will be stored in either files (in the case of raw data for archi
 ### Raw Data Files
 The raw scraped data from topic indexes will be aggregated and stored in .csv files per board scraped. Scraped topic page data will be stored in .json files for each scraped topic.
 
-### Database(using SQLite)
+### Database
 A database will be used to store cleaned and processed data. As this project is only focused on keysets (for the moment), any cleaned data on non-keyset topics (such as data gathered from topic index pages) will be stored. These database entries may be incomplete as no topic page-level data gathering is planned for non-keyset topics. The current database schema is included below.
+
+#### Database Choice (SQLite)
+SQLite was chosen to store the final dataset out of all the possible options (spreadsheets, .csv files, full fledged relational dbs, etc.) for a variety of reasons. This project involves a fairly low number of records (~5000 in the main table) and a relatively simple schema using 3 tables. This volume of data would be possible to store in a spreadsheet or series of .csv files, but a relational database would make sythesizing data from multiple tables easier when analyzing and visualizing. Due to the low performance demands on the database SQLite was the convenient choice (as it doesn't need a separate server instance).
 
 #### Schema:
 ```sql
@@ -127,6 +130,7 @@ Some extracted fields have to undergo significant processing before they will be
 6. update database with processed topic page data
 7. manually clean/validate database
 	- scan through topic_data correcting improperly parsed set names
+	- manually remove indications of "round 2" or similar
 
 ### Topic Title Parsing
 This project uses Lark's implementation of an Earley parser and a custom grammar that recognizes the infocodes and general structure of group buy topics. The grammar tries to identify the section of the topic title where the keyset is identified (usually of the form `[infocode][setname]`) by referencing a dictionary of possible infocodes that are currently in use. There is a finite (but growing) number of infocodes currently in use and the parser can use an identified infocode to find the (usually adjacent) name of the keyset.
@@ -136,11 +140,20 @@ The full parser grammar (including the dictionary of infocodes) is stored in a [
 ---
 ## Data Analysis
 
-*TBC*
-This stage is planned to largely take place in Jupyter and will initially produce a one-off report (with nice graphs). As discussed in the extension section, any useful statistics found in exploratory data analysis may be later formalized into a dashboard.
+The initial analysis for this project examined the cleaned data over a number of analysis dimensions. During the analysis, each dimension was compared against one or more other dimensions to identify correlations or other trends that may explain the current state of the group buy scene for mechanical keyboard components.
+
+#### Analysis Dimensions:
+  - group buy topic creation date
+  - group buy and interest check infocodes
+  - topic popularity (as measured by views/replies)
+  - linked domains in group buys 
+    - potentially shows number of regional vendors used for fulfillment
+  - matches between a group buy and a corresponding interest check (a "gb-ic match")
+
+To perform the analysis, SQL queries slicing the data to isolate two or more dimensions were run on the database containing the previously cleaned data. Some of these queries (largely created on an ad-hoc basis) are available in this [analysis query script](db_scripts/db_analysis.sql). The final project presentation/report contains visualizations based on some of the queries generated at this stage.
 
 ### Group Buy - Interest Check Topic Matching
-Matching group buy topics to their corresponding interest check topics is important for analysis of this topic. For example, gb-ic matching can help determine what % of interest checks result in a group buy or how strongly an interest check's popularity is correlated with the existence (or popularity) of a corresponding group buy. 
+Analysis at this stage specifically focused on matching group buy topics to corresponding interest check topics. FGb-ic matches can help determine what percentage of interest checks result in a group buy or how strongly an interest check's popularity is correlated with the existence (or popularity) of a corresponding group buy. 
   
 #### Assumptions
 - keysets have a consistent (and unique) name across group buy and interest check topics
