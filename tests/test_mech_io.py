@@ -262,3 +262,14 @@ class TestQueryKeycapTopics(TestCase):
         result_data = db_query_keycap_topics(self.test_db)
         self.assertEqual("110579", result_data[0])
         self.assertEqual(7, len(result_data))
+
+
+class TestParseTdString(TestCase):
+    def test_db_parse_td_str(self):
+        # TODO: To finish this unit test and check for conditions, need to get a test db with more significant data
+        #  (entries with topic-level data and different boards)
+        
+        self.assertEqual(0, db_parse_td_str("6:09:31")['days'])
+        self.assertEqual(9, db_parse_td_str("9 days, 7:59:12")['days'])
+        self.assertEqual(15, db_parse_td_str("15 days, 7:59:12")['days'])
+        self.assertEqual(None, db_parse_td_str(None)['days'])

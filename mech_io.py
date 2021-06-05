@@ -4,6 +4,7 @@ import os
 import csv
 import datetime
 import json
+import regex
 
 
 def write_csv(data, filepath, fields, overwrite=False):
@@ -408,3 +409,18 @@ def db_query(query, db=None, existing_conn=None):
         conn.close()
 
     return query_result
+
+
+def db_parse_td_str(td_str):
+    timedelta = {}
+    
+    if td_str == None:
+        timedelta['days'] = None
+    else:
+        day_str = regex.search('([0-9]+) days?', td_str)
+        if day_str == None:
+            timedelta['days'] = 0
+        else:
+            timedelta['days'] = int(day_str[1])
+
+    return timedelta
