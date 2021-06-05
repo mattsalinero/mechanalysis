@@ -74,6 +74,18 @@ JOIN (
 ON ydata.gb_year = iydata.gb_year
 ORDER BY gb_year;
 
+/* keycap group buy time interval stats (aggregate in python)
+    - pulls topic level post_50_delta stats
+    - sqlite doesn't support time intervals */
+    SELECT
+        topic_id,
+        STRFTIME('%Y', topic_created) as gb_year,
+        post_50_delta
+    FROM topic_data
+    WHERE product_type = 'keycaps'
+            AND board_id = '70'
+    ORDER BY gb_year
+
 /* per-topic group buy data for visualization */
 SELECT
     tdata.topic_id,
