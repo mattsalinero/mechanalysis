@@ -145,15 +145,35 @@ The initial analysis for this project examined the cleaned data over a number of
 #### Analysis Dimensions:
   - group buy topic creation date
   - group buy and interest check infocodes
-  - topic popularity (as measured by views/replies)
+  - group buy popularity/hype
   - linked domains in group buys 
     - potentially shows number of regional vendors used for fulfillment
   - matches between a group buy and a corresponding interest check (a "gb-ic match")
+  - multiple group buy rounds for the same product
 
 To perform the analysis, SQL queries slicing the data to isolate two or more dimensions were run on the database containing the previously cleaned data. Some of these queries (largely created on an ad-hoc basis) are available in this [analysis query script](db_scripts/db_analysis.sql). The final project presentation/report contains visualizations based on some of the queries generated at this stage.
 
+### Group Buy Hype Measurement
+Measuring the sucess of a group buy is an important piece of this analysis, however, sales data (and other data on the financial status of each group buy) was not readily available. Instead, this project uses group buy popularity (in the form of user engagement) as the main success metric for analysis. However, the simplest engagement metrics (raw topic views/replies) are biased against newer group buys and therefore aren't reliable when comparing group buy data across different years. Many group buys continue accumulating views and replies long after the group buy has ended (for example, when the product finally begins shipping or extras are later sold).
+
+#### The Hype Metric
+This project uses "hype" metric, which tracks user engagement with the group buy (in the form of posting responses) near the time the group buy topic was created. The hype metric is binary, where a topic is considered "hyped" if it reaches 50 posts in the first 30 days, and not hyped if it fails to do so.
+
+- limiting analysis to just the first 30 days mitigates the bias against newer topics
+- the target 50th post is still on the first topic page
+    - no additional page requests needed to calculate this metric
+- 30 days/1 month is a common length of time for a group buy to be open
+  - also tested 14 and 21 days, but 30 seemed like the natural choice
+- using a binary metric reduces the effect of large outliers in the dataset
+
+#### Implementation Challenges
+- each post contains a timestamp that can be compared to the topic's creation timestamp
+    - no similar information available for views
+- SQLite doesn't support time intervals/calculations using time intervals
+  - data for the group buy hype was stored as a string and parsed and aggregated separately during analysis
+
 ### Group Buy - Interest Check Topic Matching
-Analysis at this stage specifically focused on matching group buy topics to corresponding interest check topics. FGb-ic matches can help determine what percentage of interest checks result in a group buy or how strongly an interest check's popularity is correlated with the existence (or popularity) of a corresponding group buy. 
+The analysis at this stage included matching group buy topics to corresponding interest check topics. FGb-ic matches can help determine what percentage of interest checks result in a group buy or how strongly an interest check's popularity is correlated with the existence (or popularity) of a corresponding group buy. 
   
 #### Assumptions
 - keysets have a consistent (and unique) name across group buy and interest check topics
@@ -167,7 +187,7 @@ Analysis at this stage specifically focused on matching group buy topics to corr
 - calculate the "topic rank" for each topic
   - topic rank reflects how many previous topics were created with the same name
   - for example, `topic_rank: 1` is the first topic with that name and `topic_rank: 5` is the fifth
-  - calculated by comparing `topic_id` for each topic against all other topics with the same `full_name`
+  - calculated by comparing `topic_id` for each topic against all other topics with the same `full_name` (case insensitive)
     - lowest `topic_id` is rank 1, next lowest is rank 2, and so on
     - in SQL this is implemented using a window function to `PARTITION BY full_name` and `ORDER BY topic_id`
 - match topics based on name and `topic_rank`
@@ -189,7 +209,7 @@ WITH --cte to get base view with full_name and data relevant for matching
             set_name,
             icode.info_code || ' ' || set_name as full_name,
             ROW_NUMBER() OVER( 
-                PARTITION BY info_code, set_name 
+                PARTITION BY info_code, UPPER(set_name) 
                 ORDER BY CAST(tdata.topic_id as INT)
                 ) as topic_rank --lists if first, second etc. gb/ic
         FROM topic_data as tdata
@@ -229,6 +249,9 @@ ORDER BY order_calc;
 ## Results and Visualizations
 
 *TBC*
+- overall story increased saturation in the market?
+- shift away from group buys to instock/greater availability?
+- lately, increased diversification in different profiles/manufacturers
 
 ---
 ## Potential Extensions
