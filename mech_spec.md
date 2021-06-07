@@ -148,6 +148,7 @@ The initial analysis for this project examined the cleaned data over a number of
   - group buy popularity/hype
   - linked domains in group buys 
     - potentially shows number of regional vendors used for fulfillment
+    - includes data on other discussion platforms (discord)
   - matches between a group buy and a corresponding interest check (a "gb-ic match")
   - multiple group buy rounds for the same product
 
