@@ -39,8 +39,10 @@ FROM (
         COUNT(DISTINCT creator_id) as num_creators,
         CAST(AVG(views) as INT) as avg_views,
         MAX(views) as max_views,
+        SUM(views) as sum_views,
         CAST(AVG(replies) as INT) as avg_replies,
         MAX(replies) as max_replies,
+        SUM(replies) as sum_replies,
         COUNT(CASE WHEN num_posts >= 25 THEN 1 END) * 100.0 
             / COUNT(tdata.topic_id) as percent_25_posts,
         COUNT(CASE WHEN num_posts >= 50 THEN 1 END) * 100.0 
@@ -205,23 +207,56 @@ ORDER BY gb_year;
 
 /* per-domain/vendor data */
 SELECT
-    domain,
+    LOWER(domain) as domain,
     COUNT(DISTINCT topic_id) as num_topics,
     COUNT(id) as num_occurances
 FROM topic_link
-GROUP BY domain
+GROUP BY LOWER(domain)
 ORDER BY num_topics desc;
 
 /* yearly domain data */
 SELECT
-    domain,
+    LOWER(domain) as domain,
     STRFTIME('%Y', tdata.topic_created) as gb_year,
     COUNT(DISTINCT ldata.topic_id) as num_topics,
     COUNT(id) as num_occurances
 FROM topic_link as ldata
 JOIN topic_data as tdata
     ON ldata.topic_id = tdata.topic_id
-GROUP BY domain, gb_year
+GROUP BY LOWER(domain), gb_year
+ORDER BY gb_year;
+
+/* expanded domain/vendor data */
+SELECT
+    CASE
+        WHEN link LIKE '%discord%' THEN 'discord.gg'
+        WHEN LOWER(domain) LIKE ('%' || REPLACE(LOWER(set_name), ' ', '') || '%')
+            THEN 'custom domain'
+        ELSE LOWER(domain)
+    END as domain_type,
+    COUNT(DISTINCT ldata.topic_id) as num_topics,
+    COUNT(id) as num_occurances
+FROM topic_link as ldata
+JOIN topic_data as tdata
+    ON ldata.topic_id = tdata.topic_id
+GROUP BY domain_type
+ORDER BY num_topics desc;
+
+/* yearly expanded domain/vendor data */
+SELECT
+    CASE
+        WHEN link LIKE '%discord%' THEN 'discord.gg'
+        WHEN LOWER(domain) LIKE ('%' || REPLACE(LOWER(set_name), ' ', '') || '%')
+            THEN 'custom domain'
+        ELSE LOWER(domain)
+    END as domain_type,
+    STRFTIME('%Y', tdata.topic_created) as gb_year,
+    COUNT(DISTINCT ldata.topic_id) as num_topics,
+    COUNT(id) as num_occurances
+FROM topic_link as ldata
+JOIN topic_data as tdata
+    ON ldata.topic_id = tdata.topic_id
+GROUP BY domain_type, gb_year
 ORDER BY gb_year;
 
 /* per-creator data */
@@ -252,7 +287,7 @@ WITH --cte to get base view with full_name and data relevant for matching
             set_name,
             icode.info_code || ' ' || set_name as full_name,
             ROW_NUMBER() OVER( 
-                PARTITION BY info_code, set_name 
+                PARTITION BY info_code, UPPER(set_name) 
                 ORDER BY CAST(tdata.topic_id as INT)
                 ) as topic_rank --lists if first, second etc. gb/ic
         FROM topic_data as tdata
@@ -339,7 +374,7 @@ WITH --cte to get base view with full_name and data relevant for matching
             views,
             replies,
             ROW_NUMBER() OVER( 
-                PARTITION BY info_code, set_name 
+                PARTITION BY info_code, UPPER(set_name) 
                 ORDER BY CAST(tdata.topic_id as INT)
                 ) as topic_rank --lists if first, second etc. gb/ic
         FROM topic_data as tdata
