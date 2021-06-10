@@ -4,7 +4,7 @@ Creator: Matt Salinero
 
 Created: 2021-01-11
 
-Last Updated: 2021-06-03
+Last Updated: 2021-06-09
 
 ---
 ## Project Overview
@@ -17,11 +17,11 @@ Last Updated: 2021-06-03
 This project will attempt to analyze data on keycap group buys listed on community websites to identify year over year trends.
 
 ### Context
-Over the last \~five years the mechanical keyboard hobby has experienced rapid growth. Being a mechanical keyboard enthusiast involves researching, preordering, waiting for, and assembling exclusive mechanical keyboards from limited run keyboard components (such as keycaps, keyboard chassis, and switches). Also, mechanical keyboards can be typed on! 
+Over the last \~five years a community of mechanical keyboard enthusiasts has experienced rapid growth. Being a mechanical keyboard enthusiast involves researching, preordering, waiting for, and assembling exclusive mechanical keyboards from limited run keyboard components (such as keycaps, keyboard chassis, and switches). Also, mechanical keyboards can be typed on! 
 
-Currently, the mechanical keyboard industry lacks clear corporate leaders designing and selling enthusiast-level components. Instead, the manufacture of components is often financed using a group buy system that relies on the community preordering components to cover manufacturing costs. These group buys are often advertised on dedicated community forums, subreddits, and content creator communities dedicated to mechanical keyboards. 
+At present, the market for enthusiast-level mechanical keyboard components is fragmented and largely lacks major consolidation or corporate investment. Instead, the manufacture of components is often financed using a group buy system that relies on the community preordering components to cover manufacturing costs. These group buys are often advertised on dedicated community forums, subreddits, and content creator communities dedicated to mechanical keyboards. 
 
-However, despite the group buys being publicly advertised, data on the success or failure rate of group buys is not readily accessible. Much of tha available information is buried in unstructured forum threads or posts. Clear trends present in the publically available data could be used by aspiring designers to inform their choices when attempting to realize their own keycap set.
+However, despite group buys being publicly advertised, aggregated data on group buy sucess, failure, or popularity is not readily accessible. Much of the available information on group buys is buried in unstructured forum threads or posts. Clear trends present in the publically available data could be used by aspiring component designers to inform their choices when attempting to realize their own keycap set.
 
 #### Terminology 
 - group buy: a form of crowdfunding in which user pre-orders are used to fund manufacturing 
@@ -51,7 +51,7 @@ Analysis of prebuilt keyboards and keyboard components other than keycaps (ex. s
 ---
 ## Data Sources
 
-The main data source for this project is publicly available data [geekhack](https://geekhack.org/), a community forum. Relevant data will be acquired by scraping public topic and post contents from geekhack's "group buys and preorders" and "interest checks" forums. As the project is focused on the effects/outcomes of activities on these community forums, acquiring the available data straight from this source provides the best chance of capturing relevant information. The webscraper will use the "beautifulsoup4" and "requests" python libraries to extract and save scraped data for analysis.
+The main data source for this project is publicly available data from [geekhack.org](https://geekhack.org/), a community forum for mechanical keyboards. Relevant data will be acquired by scraping public topic post content and topic metadata from geekhack's "group buys and preorders" and "interest checks" forums. As the project is focused on the effects/outcomes of activities on these community forums, acquiring the available data straight from this source provides the best chance of capturing relevant information. The webscraper will use the "beautifulsoup4" and "requests" python libraries to extract and save scraped data for analysis.
 
 To minimize requests to geekhack, scraping will be performed in two stages. First, the scraper will ingest topic titles from group buy/interest check topic index pages and perform initial data processing to identify relevant topics (about keysets). In the second stage, the scraper will access the topic pages for the topics identified in stage one to extract additional data about each relevant topic.
 
@@ -158,7 +158,7 @@ To perform the analysis, SQL queries slicing the data to isolate two or more dim
 Measuring the sucess of a group buy is an important piece of this analysis, however, sales data (and other data on the financial status of each group buy) was not readily available. Instead, this project uses group buy popularity (in the form of user engagement) as the main success metric for analysis. However, the simplest engagement metrics (raw topic views/replies) are biased against newer group buys and therefore aren't reliable when comparing group buy data across different years. Many group buys continue accumulating views and replies long after the group buy has ended (for example, when the product finally begins shipping or extras are later sold).
 
 #### The Hype Metric
-This project uses "hype" metric, which tracks user engagement with the group buy (in the form of posting responses) near the time the group buy topic was created. The hype metric is binary, where a topic is considered "hyped" if it reaches 50 posts in the first 30 days, and not hyped if it fails to do so.
+This project uses a "hype" metric, which tracks user engagement with the group buy (in the form of posting responses) near the time the group buy topic was created. The hype metric is binary, where a topic is considered "hyped" if it reaches 50 posts in the first 30 days, and not hyped if it fails to do so.
 
 - limiting analysis to just the first 30 days mitigates the bias against newer topics
 - the target 50th post is still on the first topic page
@@ -253,6 +253,10 @@ ORDER BY order_calc;
 - overall story increased saturation in the market?
 - shift away from group buys to instock/greater availability?
 - lately, increased diversification in different profiles/manufacturers
+
+### Key Takeaways
+
+*TBC*
 
 ---
 ## Potential Extensions
