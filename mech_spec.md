@@ -174,7 +174,7 @@ This project uses a "hype" metric, which tracks user engagement with the group b
   - data for the group buy hype was stored as a string and parsed and aggregated separately during analysis
 
 ### Group Buy - Interest Check Topic Matching
-The analysis at this stage included matching group buy topics to corresponding interest check topics. FGb-ic matches can help determine what percentage of interest checks result in a group buy or how strongly an interest check's popularity is correlated with the existence (or popularity) of a corresponding group buy. 
+The analysis at this stage included matching group buy topics to corresponding interest check topics. Gb-ic matches can help determine what percentage of interest checks result in a group buy or how strongly an interest check's popularity is correlated with the existence (or popularity) of a corresponding group buy. 
   
 #### Assumptions
 - keysets have a consistent (and unique) name across group buy and interest check topics
