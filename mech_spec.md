@@ -249,14 +249,26 @@ ORDER BY order_calc;
 ----
 ## Results and Visualizations
 
-*TBC*
-- overall story increased saturation in the market?
-- shift away from group buys to instock/greater availability?
-- lately, increased diversification in different profiles/manufacturers
+*TBC results summary (w/ numbers)*
 
 ### Key Takeaways
 
-*TBC*
+#### Less Focus on the Forum
+Despite massive increases in the total number of group buys being run in recent years, engagement on the forum has been steadily eroding. 
+- if running a group buy, look to establish other platforms for discussion in addition to the group buy/info check topics
+    - discord seems to be increasingly attractive (if partnered with a popular vendor or other large community)
+    - advertising on other social media may also be necessary, as the community seems to spend the majority of its time elsewhere
+- if a group buy customer, the forums still seems good for discovery, but other platforms (such as a discord group) may be more responsive for asking questions
+
+#### Infocodes as They've Always Been
+Across the gathered data, the distribution of infocode categories among group buys was overall stable at:
+
+- ~65% GMK (Cherry profile)
+- <5% non-GMK ABS (Cherry profile)
+- ~10% PBT (Cherry profile)
+- ~20% alternative profiles
+
+GMK group buys make up most of the overall market for group buys and virtually all ABS cherry profile group buys. However, there's still steady demand for the other categories. While GMK's dominance seems set to continue into the future, the other categories aren't dying out and are growing at a rate roughly proportional to the overall number of group buys.
 
 ---
 ## Potential Extensions
