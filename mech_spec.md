@@ -4,12 +4,16 @@ Creator: Matt Salinero
 
 Created: 2021-01-11
 
-Last Updated: 2021-06-09
+Last Updated: 2021-06-20
 
 ---
 ## Project Overview
 
-*TBC*
+This project analyzed data on keycap group buys self-scraped from community websites.
+- data was scraped from [geekhack.org](https://geekhack.org/) using python (beautifulsoup4 library)
+- the scraped data was pre-processed using python (including parsing unstructured topic titles using an Earlry parsing algorithm and custom grammar)
+- data storage was accomplished using a relational database (and SQL used to store, further clean, and access database data)
+- analysis and graphing performed using Jupyter and MatPlotLib
 
 ---
 ## Task
