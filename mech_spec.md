@@ -251,7 +251,7 @@ ORDER BY order_calc;
 ----
 ## Results and Visualizations
 
-*TBC results summary (w/ numbers)*
+Final analysis and visualization was performed using Pandas, Jupyter, and MatPlotLib to generate a [report](mech_report.ipynb) exploring the data from numerous angles. A large portion of the analysis focused on the "hype" metric and the gb-ic match analysis discussed in detail above.
 
 ### Key Takeaways
 
@@ -276,11 +276,11 @@ GMK group buys make up most of the overall market for group buys and virtually a
 
 -  [Full Project Report](mech_report.ipynb)
    - full report for project (as a jupyter notebook), includes analysis, visualizations, and the code used to generate the report
-- [Clean Project Report](mech_report.html)
+- [Clean Report](https://mattsalinero.github.io/mech_report.html)
   - clean version of report for project (as a .html file), includes analysis and visualizations of findings, but code is hidden
 
 ---
-## Potential Extensions
+## Potential Project Extensions
 
 - classifieds board analysis (for post-group buy interest in sets)
 - further topic content analysis:
