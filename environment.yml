@@ -12,3 +12,4 @@ dependencies:
   - lark-parser
   - emoji
   - tldextract
+  - nbconvert
