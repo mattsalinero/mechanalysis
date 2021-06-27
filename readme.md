@@ -22,5 +22,8 @@ Prior to full analysis, the selected data on keyset group buys was manually clea
 #### [SQL files](db_scripts)
 - various SQL scripts and statements used to aggregate and analyze data for this project
 
-#### [Project Report](mech_report.ipynb)
-- full report for project (as a jupyter notebook), includes analysis and visualizations of findings
+#### [Full Project Report](mech_report.ipynb)
+- full report for project (as a jupyter notebook), includes analysis, visualizations, and the code used to generate the report
+
+#### [Clean Project Report](mech_report.html)
+- clean version of report for project (as a .html file), includes analysis and visualizations of findings, but code is hidden

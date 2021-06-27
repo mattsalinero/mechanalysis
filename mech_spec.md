@@ -272,6 +272,13 @@ Across the gathered data, the distribution of infocode categories among group bu
 
 GMK group buys make up most of the overall market for group buys and virtually all ABS cherry profile group buys. However, there's still steady demand for the other categories. While GMK's dominance seems set to continue into the future, the other categories aren't dying out and are growing at a rate roughly proportional to the overall number of group buys.
 
+### Reports
+
+-  [Full Project Report](mech_report.ipynb)
+   - full report for project (as a jupyter notebook), includes analysis, visualizations, and the code used to generate the report
+- [Clean Project Report](mech_report.html)
+  - clean version of report for project (as a .html file), includes analysis and visualizations of findings, but code is hidden
+
 ---
 ## Potential Extensions
 
